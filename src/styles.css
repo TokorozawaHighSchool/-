@@ -1,0 +1,134 @@
+body {
+    font-family: 'Segoe UI', 'Rounded Mplus 1c', 'Hiragino Sans', sans-serif;
+    background: linear-gradient(135deg, #f9eaff 0%, #eafffa 100%);
+    margin: 0;
+    padding: 0;
+}
+
+#game-container {
+    max-width: 1600px;
+    margin: 24px auto;
+    padding: 24px;
+    background: rgba(255,255,255,0.85);
+    border-radius: 24px;
+    box-shadow: 0 4px 32px rgba(200,180,255,0.18);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 3px solid #f7cfff;
+}
+
+h1 {
+    margin: 18px 0 24px 0;
+    font-size: 3rem;
+    color: #e9aaff;
+    text-shadow: 0 2px 8px #fff0fa;
+    letter-spacing: 0.08em;
+}
+
+#board {
+    width: 1500px;
+    min-height: 150px;
+    background: linear-gradient(90deg, #ffeaff 0%, #eafffa 100%);
+    border: 3px solid #b8eaff;
+    border-radius: 20px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    padding: 12px 0;
+    box-shadow: 0 2px 16px #e0e7ff;
+}
+
+.square {
+    width: 60px;
+    height: 60px;
+    border: 3px solid #f7cfff;
+    border-radius: 16px;
+    margin: 0 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #ffeaff 60%, #eafffa 100%);
+    position: relative;
+    font-size: 28px;
+    color: #b48fff;
+    box-shadow: 0 2px 8px #fff0fa;
+}
+
+.player {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: -44px;
+    left: 10px;
+    font-weight: bold;
+    border: 3px solid #fff;
+    font-size: 24px;
+    box-shadow: 0 2px 12px #e0e7ff;
+    background: linear-gradient(135deg, #ffb8e6 0%, #b8eaff 100%);
+}
+
+#player-info {
+    font-size: 26px;
+    margin-bottom: 18px;
+    width: 100%;
+    text-align: center;
+    color: #b48fff;
+    background: rgba(255,255,255,0.7);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px #e0e7ff;
+}
+
+#roll-button {
+    padding: 16px 56px;
+    font-size: 28px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(90deg, #ffb8e6 0%, #b8eaff 100%);
+    color: #fff;
+    cursor: pointer;
+    margin-bottom: 18px;
+    transition: background 0.2s;
+    box-shadow: 0 2px 12px #e0e7ff;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+}
+
+#roll-button:hover {
+    background: linear-gradient(90deg, #b8eaff 0%, #ffb8e6 100%);
+}
+
+#result {
+    font-size: 24px;
+    margin-bottom: 12px;
+    min-height: 36px;
+    color: #b48fff;
+    text-shadow: 0 2px 8px #fff0fa;
+}
+
+/* 画面中央に大きく重ねて表示するオーバーレイ */
+#overlay-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%);
+    z-index: 100;
+    font-size: 3.5rem;
+    font-weight: bold;
+    color: #e9aaff;
+    background: rgba(255,255,255,0.85);
+    padding: 32px 64px;
+    border-radius: 24px;
+    box-shadow: 0 4px 32px #e0e7ff;
+    text-align: center;
+    pointer-events: none;
+    display: none;
+    text-shadow: 0 2px 16px #fff0fa;
+}
