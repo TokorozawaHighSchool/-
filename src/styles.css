@@ -26,7 +26,7 @@
     border: 5px solid #b8eaff;
     border-radius: 36px;
     display: grid;
-    grid-template-columns: repeat(15, 1fr);
+    grid-template-columns: repeat(13, 1fr);
     grid-template-rows: repeat(2, 1fr);
     justify-items: center;
     align-items: center;
@@ -207,35 +207,40 @@ h1 {
 
 
 .square {
-    width: 72px;
-    height: 72px;
+    /* もう少し大きくして、余白を狭める */
+    width: 120px;
+    height: 120px;
     border: 3px solid #f7cfff;
     border-radius: 18px;
-    margin: 8px 8px;
+    margin: 6px 4px; /* 横を少し詰める */
+    padding: 6px; /* 内側に余白を確保 */
+    box-sizing: border-box; /* 境界を含めてサイズ計算 */
     display: flex;
     justify-content: center;
     align-items: center;
     background: linear-gradient(135deg, #ffeaff 60%, #eafffa 100%);
     position: relative;
-    font-size: 32px;
+    font-size: 36px;
     color: #b48fff;
-    box-shadow: 0 4px 16px #fff0fa;
+    box-shadow: 0 6px 20px #fff0fa;
 }
 
 .player {
-    width: 48px;
-    height: 48px;
+    /* マス内に収めつつ互いに被らないように調整 */
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     color: #fff;
     display: flex;
     justify-content: center;
     align-items: center;
     position: absolute;
-    top: -54px;
-    left: 12px;
+    /* マスの内側に置くための相対位置 */
+    top: 8px;
+    left: 8px;
     font-weight: bold;
     border: 3px solid #fff;
-    font-size: 28px;
+    font-size: 30px;
     box-shadow: 0 4px 16px #e0e7ff;
     background: linear-gradient(135deg, #ffb8e6 0%, #b8eaff 100%);
 }
@@ -284,8 +289,8 @@ h1 {
 #board {
     width: 98vw;
     max-width: 1800px;
-    min-height: 180px;
-    max-height: 38vh;
+    min-height: 220px; /* マスを大きくしたので高さを確保 */
+    max-height: 48vh;
     background: linear-gradient(90deg, #ffeaff 0%, #eafffa 100%);
     border: 4px solid #b8eaff;
     border-radius: 28px;
@@ -293,10 +298,11 @@ h1 {
     flex-wrap: nowrap;
     justify-content: flex-start;
     align-items: center;
+    gap: 6px; /* マス間の隙間を明示的に確保 */
     margin-bottom: 24px;
     overflow-x: auto;
     overflow-y: hidden;
-    padding: 18px 0;
+    padding: 18px 12px; /* 水平方向の内側余白を少しだけ */
     box-sizing: border-box;
     box-shadow: 0 4px 24px #e0e7ff;
     z-index: 1;
@@ -318,4 +324,63 @@ h1 {
     pointer-events: none;
     display: none;
     text-shadow: 0 2px 16px #fff0fa;
+}
+
+/* マスの右上に表示するイベントアイコンバッジ */
+.event-badge {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 20px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.85);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+/* マス中央に表示する大きなアイコン（数字の代わり） */
+.square-center-icon {
+    font-size: 48px;
+    line-height: 1;
+    pointer-events: none;
+    transform: translateY(-4px);
+    /* 背景の丸と影で可愛く */
+    width: 72px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,240,250,0.8));
+    box-shadow: 0 8px 20px rgba(200,160,240,0.15);
+}
+
+/* マスホバーで出るツールチップ */
+.square-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 160px;
+    max-width: 280px;
+    background: rgba(255,255,255,0.95);
+    color: #b48fff;
+    padding: 8px 12px;
+    border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+    font-size: 14px;
+    line-height: 1.3;
+    text-align: center;
+    display: none;
+    white-space: normal;
+    z-index: 20;
+}
+
+/* ホバーで表示 */
+.square:hover .square-tooltip {
+    display: block;
 }
