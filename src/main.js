@@ -43,6 +43,32 @@ const fixedEvents = {
     22: { text: "雑誌撮影の大仕事！準備で次のターンをスキップ", effect: "skip", value: 0 }
 };
 
+// テスト用：いくつかのマスを choice 型にして選択肢を追加
+fixedEvents[6] = {
+    text: "フォトシュートで2つの提案が来た！",
+    effect: "choice",
+    options: [
+        { text: "大胆にポーズして2マス進む", effect: "move", value: 2 },
+        { text: "安全に小幅進行（1マス）", effect: "move", value: 1 }
+    ]
+};
+fixedEvents[10] = {
+    text: "コラボの話が来た。時間がかかるかも…",
+    effect: "choice",
+    options: [
+        { text: "即決で参加→1マス進む", effect: "move", value: 1 },
+        { text: "熟考して機会を逃す→1マス戻る", effect: "move", value: -1 }
+    ]
+};
+fixedEvents[14] = {
+    text: "シークレットアイテムを見つけた！使う？",
+    effect: "choice",
+    options: [
+        { text: "使って一気に3マス進む", effect: "move", value: 3 },
+        { text: "温存して再振り権を得る", effect: "reroll", value: 0 }
+    ]
+};
+
 // ランダム割り当てだが、固定イベントを優先して配置。残りマスには重複なしで events を割り当てる。
 function shuffle(arr) {
     const a = arr.slice();
@@ -74,6 +100,67 @@ function generateSquareEvents() {
 
 const squareEvents = generateSquareEvents();
 
+// 簡易コンフェッティ: ゴール時に短時間表示
+function showConfetti(duration = 1800) {
+    const colors = ['#ffb8e6','#b8eaff','#b8ffb8','#ffeab8'];
+    const confettiContainer = document.createElement('div');
+    confettiContainer.style.position = 'fixed';
+    confettiContainer.style.top = '0';
+    confettiContainer.style.left = '0';
+    confettiContainer.style.width = '100%';
+    confettiContainer.style.height = '100%';
+    confettiContainer.style.pointerEvents = 'none';
+    confettiContainer.style.zIndex = 500;
+    document.body.appendChild(confettiContainer);
+    const count = 30;
+    for (let i=0;i<count;i++){
+        const dot = document.createElement('div');
+        const size = 8 + Math.random()*12;
+        dot.style.width = size+'px';
+        dot.style.height = size+'px';
+        dot.style.borderRadius = '50%';
+        dot.style.background = colors[Math.floor(Math.random()*colors.length)];
+        dot.style.position = 'absolute';
+        dot.style.left = (20 + Math.random()*60) + '%';
+        dot.style.top = '-5%';
+        dot.style.opacity = '0.95';
+        dot.style.transform = `translateY(0) rotate(${Math.random()*360}deg)`;
+        dot.style.transition = `transform ${0.9+Math.random()*1.2}s cubic-bezier(.2,.8,.2,1), top ${0.9+Math.random()*1.2}s linear, opacity 0.5s ease ${0.2+Math.random()*0.6}s`;
+        confettiContainer.appendChild(dot);
+        setTimeout(()=>{ dot.style.top = (60 + Math.random()*40) + '%'; dot.style.transform = `translateY(0) rotate(${Math.random()*720}deg) translateX(${(-50+Math.random()*100)}px)`; }, 20+i*10);
+    }
+    setTimeout(()=>{ confettiContainer.remove(); }, duration);
+}
+
+// マスにイベントバッジを付ける: drawBoardで使用
+function addEventBadgesToSquare(squareEl, idx) {
+    const ev = squareEvents[idx];
+    if (!ev || (!ev.text && !ev.options)) return;
+    const badge = document.createElement('div');
+    badge.className = 'event-badge';
+    badge.textContent = getEventIcon(ev) || '✦';
+    squareEl.appendChild(badge);
+}
+
+// プレイヤーの移動を滑らかにするためのヘルパー
+function animatePlayerMovement(playerIdx, fromIdx, toIdx, cb) {
+    // ステップで移動をアニメ化する
+    const dir = toIdx >= fromIdx ? 1 : -1;
+    const steps = Math.abs(toIdx - fromIdx);
+    if (steps === 0) { if (cb) cb(); return; }
+    let cur = fromIdx;
+    let i = 0;
+    const tick = () => {
+        cur += dir;
+        playerPositions[playerIdx] = cur;
+        drawBoard();
+        i++;
+        if (i < steps) setTimeout(tick, 160);
+        else { if (cb) setTimeout(cb, 120); }
+    };
+    tick();
+}
+
 // イベントに対応する絵文字アイコンを返す
 function getEventIcon(event) {
     if (!event || !event.text) return "";
@@ -100,11 +187,130 @@ const playerInfoDiv = document.getElementById("player-info");
 const rollButton = document.getElementById("roll-button");
 const resultDiv = document.getElementById("result");
 const overlayMessage = document.getElementById("overlay-message");
+const choiceModal = document.getElementById("choice-modal");
+const choiceText = document.getElementById("choice-text");
+const choiceButtons = document.getElementById("choice-buttons");
+const diceEl = document.getElementById('dice');
 const setupContainer = document.getElementById("setup-container");
 const setupForm = document.getElementById("setup-form");
 const modeSelect = document.getElementById("mode-select");
 const playerCountSelect = document.getElementById("player-count-select");
 const cpuCountSelect = document.getElementById("cpu-count-select");
+const useItemButton = document.getElementById('use-item-button');
+const itemModal = document.getElementById('item-modal');
+const itemListDiv = document.getElementById('item-list');
+const closeItemModal = document.getElementById('close-item-modal');
+const targetModal = document.getElementById('target-modal');
+const targetListDiv = document.getElementById('target-list');
+const closeTargetModal = document.getElementById('close-target-modal');
+
+// アイテム管理: 各プレイヤーは配列で所持
+let playerItems = [];
+
+function giveItem(playerIdx, item) {
+    playerItems[playerIdx] = playerItems[playerIdx] || [];
+    playerItems[playerIdx].push(item);
+    updatePlayerInfo();
+}
+
+function openItemModal() {
+    itemModal.style.display = 'flex';
+    renderItemList();
+}
+
+function closeItemModalFn() { itemModal.style.display = 'none'; }
+
+function renderItemList() {
+    itemListDiv.innerHTML = '';
+    const items = playerItems[currentPlayer] || [];
+    if (items.length === 0) {
+        itemListDiv.textContent = '所持しているアイテムはありません';
+        return;
+    }
+    items.forEach((it, idx) => {
+        const row = document.createElement('div');
+        row.style.display = 'flex'; row.style.gap = '8px'; row.style.alignItems='center';
+        row.innerHTML = `<div style="flex:1">${it.name}: ${it.desc}</div>`;
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn'; btn.textContent = '使う';
+        btn.addEventListener('click', ()=>{ useItem(currentPlayer, idx); });
+        row.appendChild(btn);
+        itemListDiv.appendChild(row);
+    });
+}
+
+function useItem(playerIdx, itemIdx) {
+    const items = playerItems[playerIdx] || [];
+    if (!items[itemIdx]) return;
+    const item = items.splice(itemIdx,1)[0];
+    // 簡易効果: 種類に応じて適用
+    if (item.type === 'move') {
+        playerPositions[playerIdx] = Math.min(NUM_SQUARES-1, playerPositions[playerIdx] + (item.value||0));
+        showOverlayMessage(`${playerNames[playerIdx]} は ${item.name} を使って ${item.value} マス進んだ！`,1600);
+    } else if (item.type === 'reroll') {
+        showOverlayMessage(`${playerNames[playerIdx]} は ${item.name} を使って再振り権を得た！`,1400);
+        setTimeout(()=>{ rollButton.click(); }, 900);
+    } else if (item.type === 'attack') {
+        // 人間が使う場合はターゲット選択モーダルを出す
+        const isHuman = !(isCpuMode && playerIdx >= NUM_PLAYERS - NUM_CPUS);
+        if (isHuman) {
+            // 元の位置にアイテムを戻す（まだ消費しない）
+            playerItems[playerIdx] = playerItems[playerIdx] || [];
+            playerItems[playerIdx].splice(itemIdx, 0, item);
+            // 表示
+            targetListDiv.innerHTML = '';
+            for (let i=0;i<NUM_PLAYERS;i++) {
+                if (i === playerIdx) continue;
+                const btn = document.createElement('button');
+                btn.className = 'target-btn';
+                btn.textContent = `${playerNames[i]} (${playerPositions[i]+1})`;
+                btn.addEventListener('click', ()=>{
+                    // 消費して効果適用
+                    const removed = playerItems[playerIdx].splice(playerItems[playerIdx].indexOf(item),1);
+                    playerPositions[i] = Math.max(0, playerPositions[i] - (item.value||1));
+                    drawBoard(); updatePlayerInfo();
+                    showOverlayMessage(`${playerNames[playerIdx]} は ${item.name} で ${playerNames[i]} を妨害した！`,1600);
+                    targetModal.style.display = 'none';
+                    renderItemList();
+                });
+                targetListDiv.appendChild(btn);
+            }
+            targetModal.style.display = 'flex';
+        } else {
+            // CPUはランダムに選択
+            const targets = [];
+            for (let i=0;i<NUM_PLAYERS;i++) if (i!==playerIdx && playerPositions[i] < NUM_SQUARES-1) targets.push(i);
+            if (targets.length>0) {
+                const t = targets[Math.floor(Math.random()*targets.length)];
+                playerPositions[t] = Math.max(0, playerPositions[t] - (item.value||1));
+                showOverlayMessage(`${playerNames[playerIdx]} は ${item.name} で ${playerNames[t]} を妨害した！`,1600);
+            } else {
+                showOverlayMessage(`${item.name} を使ったが対象がいない…`,1200);
+            }
+        }
+    }
+    drawBoard(); updatePlayerInfo(); renderItemList();
+}
+
+// アイテムを与える小イベントの追加（数カ所）
+function maybeGrantItem(playerIdx) {
+    if (Math.random() < 0.25) {
+        // 3種のアイテムをランダムで落とす
+        const pool = [
+            { name:'スピードシューズ', desc:'2マス進む', type:'move', value:2 },
+            { name:'リセットチャンス', desc:'再振り権', type:'reroll', value:0 },
+            { name:'妨害コスメ', desc:'相手1人を1マス戻す', type:'attack', value:1 }
+        ];
+        const it = pool[Math.floor(Math.random()*pool.length)];
+        giveItem(playerIdx, it);
+        showOverlayMessage(`${playerNames[playerIdx]} は ${it.name} を手に入れた！`, 1600);
+    }
+}
+
+if (useItemButton) useItemButton.addEventListener('click', openItemModal);
+if (closeItemModal) closeItemModal.addEventListener('click', closeItemModalFn);
+if (closeTargetModal) closeTargetModal.addEventListener('click', ()=>{ targetModal.style.display='none'; renderItemList(); });
+
 
 // オーバーレイ表示関数
 function showOverlayMessage(text, duration = 2000) {
@@ -181,7 +387,8 @@ function updatePlayerInfo() {
     let html = `<h2>プレイヤー情報</h2>`;
     const colors = ["#ffb8e6", "#b8eaff", "#b8ffb8", "#ffeab8"];
     for (let i = 0; i < playerNames.length; i++) {
-        html += `<span style="color:${colors[i % colors.length]};margin-right:18px;">${playerNames[i]}：${playerPositions[i] + 1} マス目</span>`;
+        const count = (playerItems[i] || []).length;
+        html += `<span style="color:${colors[i % colors.length]};margin-right:18px;">${playerNames[i]}：${playerPositions[i] + 1} マス目 ${count>0?`(アイテム:${count})`:''}</span>`;
     }
     html += `<br>現在のターン：<b style="color:${colors[currentPlayer % colors.length]}">${playerNames[currentPlayer]}</b>`;
     playerInfoDiv.innerHTML = html;
@@ -190,8 +397,18 @@ function updatePlayerInfo() {
 // イベント実行
 function executeEvent(event, playerIdx) {
     let msg = event.text || "";
+    // choiceイベント: プレイヤーに2つの選択肢を出す。{options: [{text, effect, value}, ...]}
+    if (event.effect === "choice") {
+        return handleChoiceEvent(event.options || [], playerIdx);
+    }
     if (event.effect === "move") {
+        const from = playerPositions[playerIdx];
         playerPositions[playerIdx] = Math.max(0, Math.min(playerPositions[playerIdx] + event.value, NUM_SQUARES - 1));
+        animatePlayerMovement(playerIdx, from, playerPositions[playerIdx], ()=>{
+            // 移動後にポップ効果
+            const elems = document.getElementsByClassName('player');
+            for (let e of elems) { e.classList.add('pop'); setTimeout(()=>e.classList.remove('pop'), 520); }
+        });
     } else if (event.effect === "reroll") {
         // 再振り: ターン交代しないで即座にもう一度
         drawBoard();
@@ -204,6 +421,8 @@ function executeEvent(event, playerIdx) {
             }
         }, 800);
         resultDiv.textContent = msg;
+    // reroll の場合も稀にアイテムを付与
+    maybeGrantItem(playerIdx);
         return false; // ターン交代しない
     } else if (event.effect === "skip") {
         // スキップ: 次のプレイヤーにターンを渡す追加のインクリメント
@@ -212,8 +431,75 @@ function executeEvent(event, playerIdx) {
     }
     drawBoard();
     updatePlayerInfo();
+    // イベント後に稀にアイテムを与える
+    maybeGrantItem(playerIdx);
     if (msg) resultDiv.textContent = msg;
     return true; // ターン交代する
+}
+
+// choiceイベントのハンドラ: モーダルを表示して選択を処理する
+function handleChoiceEvent(options, playerIdx) {
+    if (!options || options.length === 0) return true;
+    // 選択肢のラベルから「数字＋マス」表記を消す
+    function sanitizeChoiceLabel(text) {
+        if (!text) return '';
+    // 例: "2マス進む" "1マス戻る" や "進む"/"戻る" を除去
+    let t = text;
+    t = t.replace(/\d+\s*マス/g, '');
+    t = t.replace(/→\s*\d+\s*マス/g, '');
+    t = t.replace(/進む|進|戻る|戻/g, '');
+    t = t.replace(/\s{2,}/g, ' ');
+    return t.trim();
+    }
+    // モーダル表示（選択肢の内容は隠し、中立ラベルを表示する）
+    choiceText.textContent = `どちらを選びますか？`;
+    choiceButtons.innerHTML = "";
+    // プレイヤーかCPUかで処理を分ける
+    const isCpu = isCpuMode && playerIdx >= NUM_PLAYERS - NUM_CPUS;
+    if (isCpu) {
+        // CPUはランダムに選ぶ
+        const idx = Math.floor(Math.random() * options.length);
+        applyChoiceOption(options[idx], playerIdx);
+        const cpuLabel = `選択 ${String.fromCharCode(65 + idx)}`;
+        resultDiv.textContent = `CPUが選択: ${cpuLabel}`;
+        return true;
+    }
+    options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn' + (idx === 1 ? ' secondary' : '');
+        const label = `選択 ${String.fromCharCode(65 + idx)}`;
+        btn.textContent = label;
+        btn.addEventListener('click', () => {
+            applyChoiceOption(opt, playerIdx);
+            choiceModal.style.display = 'none';
+            // applyChoiceOption will update resultDiv with what actually happened
+            // ターンを継続させたい場合は true を返す代わりに rollButton を有効にする流れで制御
+            rollButton.disabled = false;
+        });
+        choiceButtons.appendChild(btn);
+    });
+    choiceModal.style.display = 'flex';
+    // プレイヤーが選ぶまでターンの交代はしない
+    return false;
+}
+
+function applyChoiceOption(opt, playerIdx) {
+    if (!opt) return;
+    let msg = '';
+    if (opt.effect === 'move') {
+        const from = playerPositions[playerIdx];
+        playerPositions[playerIdx] = Math.max(0, Math.min(playerPositions[playerIdx] + (opt.value || 0), NUM_SQUARES - 1));
+        msg = `${playerNames[playerIdx]} は移動して ${playerPositions[playerIdx] + 1} マス目に到達した。`;
+    } else if (opt.effect === 'reroll') {
+        msg = `${playerNames[playerIdx]} は再振りを行います。`;
+        setTimeout(() => { if (isCpuMode && playerIdx >= NUM_PLAYERS - NUM_CPUS) cpTurn(); else rollButton.click(); }, 600);
+    } else if (opt.effect === 'skip') {
+        currentPlayer = (currentPlayer + 1) % NUM_PLAYERS;
+        msg = `${playerNames[playerIdx]} のターンはスキップされました。`;
+    }
+    drawBoard();
+    updatePlayerInfo();
+    if (msg) resultDiv.textContent = msg;
 }
 
 
@@ -225,6 +511,12 @@ rollButton.addEventListener("click", () => {
     if (!isCpuMode && currentPlayer !== 0) return;
     rollButton.disabled = true;
     const dice = Math.floor(Math.random() * 6) + 1;
+    // ダイスアニメ
+    if (diceEl) {
+        diceEl.classList.add('pop');
+        setTimeout(()=>diceEl.classList.remove('pop'),420);
+        diceEl.textContent = String(dice);
+    }
     showOverlayMessage(`${playerNames[currentPlayer]} のサイコロの目: ${dice}`, 1200);
     resultDiv.textContent = `${playerNames[currentPlayer]} のサイコロの目: ${dice}`;
     playerPositions[currentPlayer] += dice;
@@ -333,6 +625,8 @@ function setupGame(mode, playerCount, cpuCount) {
             playerNames.push(`P${i + 1}`);
         }
     }
+    // アイテム初期化
+    playerItems = Array(NUM_PLAYERS).fill(0).map(()=>[]);
     drawBoard();
     updatePlayerInfo();
     resultDiv.textContent = "";
