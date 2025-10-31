@@ -1,0 +1,470 @@
+/* 盤面を下まで伸ばすためflex-growを活用 */
+#game-container {
+    width: 100vw;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #f9eaff 0%, #eafffa 100%);
+    border-radius: 0 0 48px 48px;
+    box-shadow: 0 8px 48px 0 #e9aaff44, 0 0 0 8px #ffeaff44 inset;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 4px solid #f7cfff;
+    box-sizing: border-box;
+    overflow: visible;
+}
+
+/* 盤面を下まで伸ばす */
+#board {
+    width: 90vw;
+    max-width: 1200px;
+    min-height: 260px;
+    height: 100%;
+    flex-grow: 1;
+    background: linear-gradient(120deg, #ffeaff 60%, #eafffa 100%);
+    border: 5px solid #b8eaff;
+    border-radius: 36px;
+    display: grid;
+    grid-template-columns: repeat(13, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    justify-items: center;
+    align-items: center;
+    margin-bottom: 0;
+    overflow: visible;
+    padding: 32px 0 24px 0;
+    box-sizing: border-box;
+    box-shadow: 0 8px 32px #e0e7ff, 0 0 0 12px #ffb8e644 inset;
+    z-index: 1;
+}
+
+.square {
+    width: 120px;
+    height: 120px;
+    border: 5px solid #f7cfff;
+    border-radius: 32px;
+    margin: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #ffeaff 80%, #eafffa 100%);
+    position: relative;
+    font-size: 48px;
+    color: #b48fff;
+    box-shadow: 0 8px 32px #fff0fa;
+}
+
+.player {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: -70px;
+    left: 13px;
+    font-weight: bold;
+    border: 4px solid #fff;
+    font-size: 36px;
+    box-shadow: 0 6px 24px #e0e7ff;
+    background: linear-gradient(135deg, #ffb8e6 0%, #b8eaff 100%);
+}
+
+#player-info {
+    font-size: 36px;
+    margin-bottom: 32px;
+    width: 90vw;
+    max-width: 1200px;
+    min-height: 72px;
+    max-height: 96px;
+    text-align: left;
+    color: #b48fff;
+    background: rgba(255,255,255,0.55);
+    border-radius: 24px;
+    box-shadow: 0 8px 32px #e0e7ff, 0 0 0 8px #ffb8e644 inset;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    padding: 0 36px;
+    box-sizing: border-box;
+    z-index: 2;
+}
+#player-info h2 {
+    display: none;
+}
+#setup-container {
+    width: 600px;
+    margin: 0 auto 32px auto;
+    padding: 32px 32px 24px 32px;
+    background: linear-gradient(135deg, #ffeaff 60%, #eafffa 100%);
+    border-radius: 32px;
+    box-shadow: 0 4px 32px #e0e7ff;
+    border: 3px solid #b8eaff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#setup-container h2 {
+    font-size: 2.2rem;
+    color: #e9aaff;
+    margin-bottom: 18px;
+    letter-spacing: 0.08em;
+    text-shadow: 0 2px 8px #fff0fa;
+}
+
+#setup-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+}
+
+#setup-form label {
+    font-size: 1.4rem;
+    color: #b48fff;
+    margin-bottom: 0;
+    border-radius: 18px;
+    padding: 8px 18px;
+    background: rgba(255,255,255,0.7);
+    box-shadow: 0 2px 8px #e0e7ff;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#setup-form select {
+    font-size: 1.3rem;
+    border-radius: 14px;
+    border: 2px solid #b8eaff;
+    padding: 6px 18px;
+    margin-left: 8px;
+    background: #fff0fa;
+    color: #b48fff;
+    box-shadow: 0 2px 8px #e0e7ff;
+    outline: none;
+    transition: border 0.2s;
+}
+
+#setup-form select:focus {
+    border: 2.5px solid #e9aaff;
+}
+
+#setup-form button[type="submit"] {
+    margin-top: 12px;
+    padding: 16px 56px;
+    font-size: 1.7rem;
+    border-radius: 18px;
+    border: none;
+    background: linear-gradient(90deg, #ffb8e6 0%, #b8eaff 100%);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 2px 12px #e0e7ff;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+    transition: background 0.2s;
+}
+
+#setup-form button[type="submit"]:hover {
+    background: linear-gradient(90deg, #b8eaff 0%, #ffb8e6 100%);
+}
+body {
+    font-family: 'Segoe UI', 'Rounded Mplus 1c', 'Hiragino Sans', sans-serif;
+    background: linear-gradient(135deg, #f9eaff 0%, #eafffa 100%);
+    margin: 0;
+    padding: 0;
+}
+
+#game-container {
+    width: 100vw;
+    height: 100vh;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    background: rgba(255,255,255,0.85);
+    border-radius: 0 0 24px 24px;
+    box-shadow: 0 4px 32px rgba(200,180,255,0.18);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 3px solid #f7cfff;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+h1 {
+    margin: 18px 0 24px 0;
+    font-size: 3rem;
+    color: #e9aaff;
+    text-shadow: 0 2px 8px #fff0fa;
+    letter-spacing: 0.08em;
+}
+
+
+.square {
+    /* もう少し大きくして、余白を狭める */
+    width: 120px;
+    height: 120px;
+    border: 3px solid #f7cfff;
+    border-radius: 18px;
+    margin: 6px 4px; /* 横を少し詰める */
+    padding: 6px; /* 内側に余白を確保 */
+    box-sizing: border-box; /* 境界を含めてサイズ計算 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #ffeaff 60%, #eafffa 100%);
+    position: relative;
+    font-size: 36px;
+    color: #b48fff;
+    box-shadow: 0 6px 20px #fff0fa;
+}
+
+.player {
+    /* マス内に収めつつ互いに被らないように調整 */
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    /* マスの内側に置くための相対位置 */
+    top: 8px;
+    left: 8px;
+    font-weight: bold;
+    border: 3px solid #fff;
+    font-size: 30px;
+    box-shadow: 0 4px 16px #e0e7ff;
+    background: linear-gradient(135deg, #ffb8e6 0%, #b8eaff 100%);
+}
+
+#player-info {
+    font-size: 28px;
+    margin-bottom: 24px;
+    width: 98vw;
+    max-width: 1800px;
+    min-height: 54px;
+    max-height: 72px;
+    text-align: left;
+    color: #b48fff;
+    background: rgba(255,255,255,0.45);
+    border-radius: 16px;
+    box-shadow: 0 4px 16px #e0e7ff;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    box-sizing: border-box;
+    z-index: 2;
+}
+
+#roll-button {
+    padding: 12px 36px;
+    font-size: 22px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(90deg, #ffb8e6 0%, #b8eaff 100%);
+    color: #fff;
+    cursor: pointer;
+    margin-bottom: 8px;
+    transition: background 0.2s;
+    box-shadow: 0 2px 12px #e0e7ff;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+}
+
+#roll-button:hover {
+    background: linear-gradient(90deg, #b8eaff 0%, #ffb8e6 100%);
+}
+
+#board {
+    width: 98vw;
+    max-width: 1800px;
+    min-height: 220px; /* マスを大きくしたので高さを確保 */
+    max-height: 48vh;
+    background: linear-gradient(90deg, #ffeaff 0%, #eafffa 100%);
+    border: 4px solid #b8eaff;
+    border-radius: 28px;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 6px; /* マス間の隙間を明示的に確保 */
+    margin-bottom: 24px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 18px 12px; /* 水平方向の内側余白を少しだけ */
+    box-sizing: border-box;
+    box-shadow: 0 4px 24px #e0e7ff;
+    z-index: 1;
+}
+#overlay-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%);
+    z-index: 100;
+    font-size: 3.5rem;
+    font-weight: bold;
+    color: #e9aaff;
+    background: rgba(255,255,255,0.85);
+    padding: 32px 64px;
+    border-radius: 24px;
+    box-shadow: 0 4px 32px #e0e7ff;
+    text-align: center;
+    pointer-events: none;
+    display: none;
+    text-shadow: 0 2px 16px #fff0fa;
+}
+
+/* マスの右上に表示するイベントアイコンバッジ */
+.event-badge {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 22px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.95);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+/* モーダル */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.28);
+    z-index: 200;
+}
+.modal-content {
+    background: linear-gradient(135deg, #fff, #fff8fc);
+    padding: 20px 28px;
+    border-radius: 16px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+    color: #b48fff;
+    text-align: center;
+    min-width: 320px;
+    border: 4px dashed rgba(180,140,255,0.08);
+}
+#choice-text {
+    font-size: 18px;
+    margin-bottom: 12px;
+}
+#choice-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+.choice-btn {
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    background: linear-gradient(90deg, #ffb8e6 0%, #b8eaff 100%);
+    color: #fff;
+}
+.choice-btn.secondary {
+    background: linear-gradient(90deg, #b8eaff 0%, #ffb8e6 100%);
+}
+
+/* ダイスボタン */
+.dice {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin-right: 10px;
+    background: linear-gradient(135deg,#fff0fb,#fff8f0);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    border: 3px solid rgba(255,200,240,0.7);
+}
+
+.dice-label{ font-weight: 800; font-size: 18px; color: #b48fff; }
+
+#roll-button{ display:flex; align-items:center; gap:8px; padding:12px 20px; border-radius:14px }
+
+#roll-button:active .dice{ transform: rotate(30deg) scale(0.95) }
+
+/* プレイヤーアバター調整 */
+.player{ font-size:20px; width:48px; height:48px }
+
+/* バッジを少し大きく（上書き） */
+.event-badge{ font-size:20px; width:34px; height:34px }
+
+/* 軽いポップアニメ */
+.pop { animation: pop 420ms cubic-bezier(.2,.9,.3,1); }
+@keyframes pop { 0% { transform: scale(0.86) } 60% { transform: scale(1.08) } 100% { transform: scale(1) } }
+
+/* アイテムアイコン */
+.item-icon { width:36px; height:36px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; margin-right:8px; background:linear-gradient(135deg,#fff,#fff8f8); border:2px solid rgba(200,180,255,0.12); }
+
+/* ターゲットモーダル */
+#target-list { display:flex; gap:10px; flex-wrap:wrap; justify-content:center }
+.target-btn { padding:8px 12px; border-radius:12px; border:none; cursor:pointer; background:linear-gradient(90deg,#ffeaff,#eafffa); color:#b48fff; font-weight:700 }
+
+
+/* マス中央に表示する大きなアイコン（数字の代わり） */
+.square-center-icon {
+    font-size: 48px;
+    line-height: 1;
+    pointer-events: none;
+    transform: translateY(-4px);
+    /* 背景の丸と影で可愛く */
+    width: 72px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,240,250,0.8));
+    box-shadow: 0 8px 20px rgba(200,160,240,0.15);
+}
+
+/* マスホバーで出るツールチップ */
+.square-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 160px;
+    max-width: 280px;
+    background: rgba(255,255,255,0.95);
+    color: #b48fff;
+    padding: 8px 12px;
+    border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+    font-size: 14px;
+    line-height: 1.3;
+    text-align: center;
+    display: none;
+    white-space: normal;
+    z-index: 20;
+}
+
+/* ホバーで表示 */
+.square:hover .square-tooltip {
+    display: block;
+}

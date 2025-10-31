@@ -1,3 +1,4 @@
+
 const NUM_SQUARES = 26;
 let NUM_PLAYERS = 2;
 let NUM_CPUS = 1;
@@ -393,41 +394,6 @@ function updatePlayerInfo() {
     playerInfoDiv.innerHTML = html;
 }
 
-// ミニゲームのロジックを追加
-function startMiniGame() {
-    const miniGameModal = document.createElement('div');
-    miniGameModal.className = 'modal';
-    miniGameModal.style.display = 'flex';
-    miniGameModal.innerHTML = `
-        <div class="modal-content">
-            <h3>ミニゲーム: 早押し勝負！</h3>
-            <p>最初にボタンを押したプレイヤーが勝利！</p>
-            <button id="mini-game-button" class="choice-btn">押して勝利！</button>
-        </div>
-    `;
-    document.body.appendChild(miniGameModal);
-
-    const button = document.getElementById('mini-game-button');
-    let winner = null;
-
-    button.addEventListener('click', () => {
-        if (!winner) {
-            winner = playerNames[currentPlayer];
-            alert(`${winner} がミニゲームに勝利しました！`);
-            giveItem(currentPlayer, { name: 'ボーナスアイテム', desc: '1マス進む', type: 'move', value: 1 });
-            miniGameModal.remove();
-        }
-    });
-}
-
-// 特定のマスでミニゲームを開始
-function checkForMiniGame(position) {
-    const miniGamePositions = [5, 10, 15]; // ミニゲームが発生するマス
-    if (miniGamePositions.includes(position)) {
-        startMiniGame();
-    }
-}
-
 // イベント実行
 function executeEvent(event, playerIdx) {
     let msg = event.text || "";
@@ -442,7 +408,6 @@ function executeEvent(event, playerIdx) {
             // 移動後にポップ効果
             const elems = document.getElementsByClassName('player');
             for (let e of elems) { e.classList.add('pop'); setTimeout(()=>e.classList.remove('pop'), 520); }
-            checkForMiniGame(playerPositions[playerIdx]); // ミニゲームのチェックを追加
         });
     } else if (event.effect === "reroll") {
         // 再振り: ターン交代しないで即座にもう一度
@@ -508,7 +473,8 @@ function handleChoiceEvent(options, playerIdx) {
             applyChoiceOption(opt, playerIdx);
             choiceModal.style.display = 'none';
             // applyChoiceOption will update resultDiv with what actually happened
-            // applyChoiceOption がターン進行やボタン有効化を制御する
+            // ターンを継続させたい場合は true を返す代わりに rollButton を有効にする流れで制御
+            rollButton.disabled = false;
         });
         choiceButtons.appendChild(btn);
     });
@@ -523,19 +489,6 @@ function applyChoiceOption(opt, playerIdx) {
     if (opt.effect === 'move') {
         const from = playerPositions[playerIdx];
         playerPositions[playerIdx] = Math.max(0, Math.min(playerPositions[playerIdx] + (opt.value || 0), NUM_SQUARES - 1));
-        // アニメーション後にターンを進める
-        animatePlayerMovement(playerIdx, from, playerPositions[playerIdx], ()=>{
-            drawBoard();
-            updatePlayerInfo();
-            // 移動後は通常通りターン交代
-            currentPlayer = (currentPlayer + 1) % NUM_PLAYERS;
-            // CPUのターンなら自動で開始、そうでなければボタンを有効化
-            if (isCpuMode && currentPlayer >= NUM_PLAYERS - NUM_CPUS) {
-                setTimeout(cpTurn, 900);
-            } else {
-                rollButton.disabled = false;
-            }
-        });
         msg = `${playerNames[playerIdx]} は移動して ${playerPositions[playerIdx] + 1} マス目に到達した。`;
     } else if (opt.effect === 'reroll') {
         msg = `${playerNames[playerIdx]} は再振りを行います。`;
@@ -543,12 +496,6 @@ function applyChoiceOption(opt, playerIdx) {
     } else if (opt.effect === 'skip') {
         currentPlayer = (currentPlayer + 1) % NUM_PLAYERS;
         msg = `${playerNames[playerIdx]} のターンはスキップされました。`;
-        // スキップ後は次のプレイヤー処理
-        if (isCpuMode && currentPlayer >= NUM_PLAYERS - NUM_CPUS) {
-            setTimeout(cpTurn, 900);
-        } else {
-            rollButton.disabled = false;
-        }
     }
     drawBoard();
     updatePlayerInfo();
