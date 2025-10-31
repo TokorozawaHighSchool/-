@@ -241,55 +241,44 @@ function renderItemList() {
 function useItem(playerIdx, itemIdx) {
     const items = playerItems[playerIdx] || [];
     if (!items[itemIdx]) return;
-    const item = items.splice(itemIdx,1)[0];
-    // 簡易効果: 種類に応じて適用
+    const item = items.splice(itemIdx, 1)[0];
+
     if (item.type === 'move') {
-        playerPositions[playerIdx] = Math.min(NUM_SQUARES-1, playerPositions[playerIdx] + (item.value||0));
-        showOverlayMessage(`${playerNames[playerIdx]} は ${item.name} を使って ${item.value} マス進んだ！`,1600);
+        playerPositions[playerIdx] = Math.min(NUM_SQUARES - 1, playerPositions[playerIdx] + (item.value || 0));
+        showOverlayMessage(`${playerNames[playerIdx]} は ${item.name} を使って ${item.value} マス進んだ！`, 1600);
     } else if (item.type === 'reroll') {
-        showOverlayMessage(`${playerNames[playerIdx]} は ${item.name} を使って再振り権を得た！`,1400);
-        setTimeout(()=>{ rollButton.click(); }, 900);
+        showOverlayMessage(`${playerNames[playerIdx]} は ${item.name} を使って再振り権を得た！`, 1400);
+        setTimeout(() => { rollButton.click(); }, 900);
     } else if (item.type === 'attack') {
-        // 人間が使う場合はターゲット選択モーダルを出す
-        const isHuman = !(isCpuMode && playerIdx >= NUM_PLAYERS - NUM_CPUS);
-        if (isHuman) {
-            // 元の位置にアイテムを戻す（まだ消費しない）
-            playerItems[playerIdx] = playerItems[playerIdx] || [];
-            playerItems[playerIdx].splice(itemIdx, 0, item);
-            // 表示
-            targetListDiv.innerHTML = '';
-            for (let i=0;i<NUM_PLAYERS;i++) {
-                if (i === playerIdx) continue;
-                const btn = document.createElement('button');
-                btn.className = 'target-btn';
-                btn.textContent = `${playerNames[i]} (${playerPositions[i]+1})`;
-                btn.addEventListener('click', ()=>{
-                    // 消費して効果適用
-                    const removed = playerItems[playerIdx].splice(playerItems[playerIdx].indexOf(item),1);
-                    playerPositions[i] = Math.max(0, playerPositions[i] - (item.value||1));
-                    drawBoard(); updatePlayerInfo();
-                    showOverlayMessage(`${playerNames[playerIdx]} は ${item.name} で ${playerNames[i]} を妨害した！`,1600);
-                    targetModal.style.display = 'none';
-                    renderItemList();
-                });
-                targetListDiv.appendChild(btn);
-            }
-            targetModal.style.display = 'flex';
+        const targetIdx = (playerIdx + 1) % NUM_PLAYERS; // 次のプレイヤーを妨害
+        playerPositions[targetIdx] = Math.max(0, playerPositions[targetIdx] - (item.value || 1));
+        showOverlayMessage(`${playerNames[playerIdx]} は ${item.name} で ${playerNames[targetIdx]} を妨害した！`, 1600);
+    } else if (item.type === 'skip-event') {
+        showOverlayMessage(`${playerNames[playerIdx]} は ${item.name} を使って次のイベントを無効化した！`, 1600);
+        // 次のイベントをスキップするフラグを設定
+        skipNextEvent = true;
+    } else if (item.type === 'warp') {
+        const targetPosition = prompt('移動したいマス番号を入力してください (1〜26):');
+        const pos = parseInt(targetPosition, 10) - 1;
+        if (!isNaN(pos) && pos >= 0 && pos < NUM_SQUARES) {
+            playerPositions[playerIdx] = pos;
+            showOverlayMessage(`${playerNames[playerIdx]} は ${item.name} を使ってマス ${pos + 1} にワープした！`, 1600);
         } else {
-            // CPUはランダムに選択
-            const targets = [];
-            for (let i=0;i<NUM_PLAYERS;i++) if (i!==playerIdx && playerPositions[i] < NUM_SQUARES-1) targets.push(i);
-            if (targets.length>0) {
-                const t = targets[Math.floor(Math.random()*targets.length)];
-                playerPositions[t] = Math.max(0, playerPositions[t] - (item.value||1));
-                showOverlayMessage(`${playerNames[playerIdx]} は ${item.name} で ${playerNames[t]} を妨害した！`,1600);
-            } else {
-                showOverlayMessage(`${item.name} を使ったが対象がいない…`,1200);
-            }
+            showOverlayMessage('無効な入力です。', 1600);
         }
     }
-    drawBoard(); updatePlayerInfo(); renderItemList();
+
+    drawBoard();
+    updatePlayerInfo();
+    renderItemList();
 }
+
+// 新しいアイテムを追加
+const newItems = [
+    { name: '妨害コスメ', desc: '相手1人を1マス戻す', type: 'attack', value: 1 },
+    { name: 'イベントキャンセラー', desc: '次のイベントを無効化', type: 'skip-event', value: 0 },
+    { name: 'ワープシューズ', desc: '任意のマスに移動', type: 'warp', value: 0 }
+];
 
 // アイテムを与える小イベントの追加（数カ所）
 function maybeGrantItem(playerIdx) {
