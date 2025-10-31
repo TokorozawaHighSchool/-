@@ -6,6 +6,21 @@ let currentPlayer = 0;
 let playerNames = [];
 let isCpuMode = true;
 
+// 女の子の名前リスト
+const girlNames = ['さくら', 'あかり', 'ひまり', 'ゆい', 'りん', 'ほのか', 'みお', 'ななみ'];
+
+// プレイヤー名を設定する関数
+function assignPlayerNames() {
+    playerNames = [];
+    for (let i = 0; i < NUM_PLAYERS; i++) {
+        if (isCpuMode && i >= NUM_PLAYERS - NUM_CPUS) {
+            playerNames.push(girlNames[(i + 1) % girlNames.length] + '（CPU）');
+        } else {
+            playerNames.push(girlNames[i % girlNames.length]);
+        }
+    }
+}
+
 // イベント一覧（理由付きの構造化データ）
 // effect: "none" | "move" | "reroll" | "skip"
 // value: move の場合の移動量（正: 進む、負: 戻る）
@@ -405,6 +420,14 @@ function startMiniGame() {
             alert(`${winner} がミニゲームに勝利しました！`);
             giveItem(currentPlayer, { name: 'ボーナスアイテム', desc: '1マス進む', type: 'move', value: 1 });
             miniGameModal.remove();
+
+            // ターン進行を明示的に制御
+            currentPlayer = (currentPlayer + 1) % NUM_PLAYERS;
+            if (isCpuMode && currentPlayer >= NUM_PLAYERS - NUM_CPUS) {
+                setTimeout(cpTurn, 1000);
+            } else {
+                rollButton.disabled = false;
+            }
         }
     });
 }
@@ -652,24 +675,52 @@ function cpTurn() {
     }, 1200);
 }
 
+// 修正: 早押し制御を追加
+function determineTurnOrder() {
+    const turnOrderModal = document.createElement('div');
+    turnOrderModal.className = 'modal';
+    turnOrderModal.style.display = 'flex';
+    turnOrderModal.innerHTML = `
+        <div class="modal-content">
+            <h3>ミニゲーム: ターン順を決めよう！</h3>
+            <p>早押しでターン順を決定します！</p>
+            <div id="turn-order-buttons"></div>
+        </div>
+    `;
+    document.body.appendChild(turnOrderModal);
 
-// ゲーム初期化
+    const buttonContainer = document.getElementById('turn-order-buttons');
+    const results = [];
+    let gameStarted = false;
+
+    for (let i = 0; i < NUM_PLAYERS; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = playerNames[i];
+        btn.className = 'choice-btn';
+        btn.addEventListener('click', () => {
+            if (!gameStarted) {
+                gameStarted = true; // 最初のボタンが押されたら制御開始
+                results.push(playerNames[i]);
+                alert(`${playerNames[i]} が最初に押しました！`);
+                turnOrderModal.remove();
+                playerNames = results.concat(playerNames.filter(name => !results.includes(name))); // 順番を更新
+                drawBoard();
+                updatePlayerInfo();
+            }
+        });
+        buttonContainer.appendChild(btn);
+    }
+}
+
+// ゲーム開始時にターン順ミニゲームを実行
 function setupGame(mode, playerCount, cpuCount) {
     isCpuMode = (mode === "cpu");
     NUM_PLAYERS = playerCount;
     NUM_CPUS = isCpuMode ? cpuCount : 0;
     playerPositions = Array(NUM_PLAYERS).fill(0);
     currentPlayer = 0;
-    playerNames = [];
-    for (let i = 0; i < NUM_PLAYERS; i++) {
-        if (isCpuMode && i >= NUM_PLAYERS - NUM_CPUS) {
-            playerNames.push(`CP${i - (NUM_PLAYERS - NUM_CPUS) + 1}`);
-        } else {
-            playerNames.push(`P${i + 1}`);
-        }
-    }
-    // アイテム初期化
-    playerItems = Array(NUM_PLAYERS).fill(0).map(()=>[]);
+    assignPlayerNames();
+    determineTurnOrder(); // ターン順ミニゲームを追加
     drawBoard();
     updatePlayerInfo();
     resultDiv.textContent = "";

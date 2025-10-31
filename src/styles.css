@@ -70,6 +70,11 @@
     font-size: 36px;
     box-shadow: 0 6px 24px #e0e7ff;
     background: linear-gradient(135deg, #ffb8e6 0%, #b8eaff 100%);
+    white-space: nowrap; /* テキストを1行に制限 */
+    overflow: hidden; /* はみ出した部分を隠す */
+    text-overflow: ellipsis; /* はみ出した部分を省略記号に置き換える */
+    max-width: 80px; /* 名前の最大幅を設定 */
+    text-align: center; /* テキストを中央揃え */
 }
 
 #player-info {
@@ -243,6 +248,11 @@ h1 {
     font-size: 30px;
     box-shadow: 0 4px 16px #e0e7ff;
     background: linear-gradient(135deg, #ffb8e6 0%, #b8eaff 100%);
+    white-space: nowrap; /* テキストを1行に制限 */
+    overflow: hidden; /* はみ出した部分を隠す */
+    text-overflow: ellipsis; /* はみ出した部分を省略記号に置き換える */
+    max-width: 80px; /* 名前の最大幅を設定 */
+    text-align: center; /* テキストを中央揃え */
 }
 
 #player-info {
