@@ -419,7 +419,7 @@ h1 {
 #roll-button:active .dice{ transform: rotate(30deg) scale(0.95) }
 
 /* プレイヤーアバター調整 */
-.player{ font-size:20px; width:48px; height:48px }
+.player{ font-size:14px; width:48px; height:48px }
 
 /* バッジを少し大きく（上書き） */
 .event-badge{ font-size:20px; width:34px; height:34px }
@@ -478,3 +478,9 @@ h1 {
 .square:hover .square-tooltip {
     display: block;
 }
+
+/* スロット用スタイル */
+.slot-reel { display:flex; gap:8px; align-items:center; justify-content:center }
+.slot-cell { width:56px; height:56px; border-radius:8px; background:#fff; display:flex; align-items:center; justify-content:center; font-size:28px; transition: transform 260ms ease; }
+.slot-cell.spin { transform: translateY(-8px) scale(0.98); filter: blur(0.6px); }
+.slot-cell.stop { transform: translateY(0) scale(1.02); box-shadow: 0 6px 18px rgba(0,0,0,0.12); }

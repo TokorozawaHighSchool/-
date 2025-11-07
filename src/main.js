@@ -355,10 +355,18 @@ function drawBoard() {
             const pSize = 56; // .player の想定サイズ(px)
             const sSize = 120; // .square の想定サイズ(px)
             const padding = 8;
-            playersHere.forEach((playerIdx, pIdx) => {
+                playersHere.forEach((playerIdx, pIdx) => {
                 const playerDiv = document.createElement("div");
                 playerDiv.className = "player";
-                playerDiv.textContent = playerNames[playerIdx];
+                // プレイヤー idx を属性として残す（勝利演出で参照するため）
+                playerDiv.setAttribute('data-player-idx', String(playerIdx));
+                // 表示用に短縮名を作成（最大3文字）
+                const fullName = playerNames[playerIdx] || '';
+                // 全角・半角混在を考慮して最大表示幅を文字数ベースで調整
+                const shortName = fullName.length > 3 ? fullName.slice(0,3) + '…' : fullName;
+                playerDiv.textContent = shortName;
+                // フルネームはツールチップとして title に設定
+                playerDiv.title = fullName;
                 // 色分け
                 const colors = ["#ffb8e6", "#b8eaff", "#b8ffb8", "#ffeab8"];
                 playerDiv.style.background = colors[playerIdx % colors.length];
@@ -398,45 +406,164 @@ function updatePlayerInfo() {
 }
 
 // ミニゲームのロジックを追加
-function startMiniGame() {
-    const miniGameModal = document.createElement('div');
-    miniGameModal.className = 'modal';
-    miniGameModal.style.display = 'flex';
-    miniGameModal.innerHTML = `
-        <div class="modal-content">
-            <h3>ミニゲーム: 早押し勝負！</h3>
-            <p>最初にボタンを押したプレイヤーが勝利！</p>
-            <button id="mini-game-button" class="choice-btn">押して勝利！</button>
-        </div>
-    `;
-    document.body.appendChild(miniGameModal);
+// ミニゲーム: 早押し / スロット / クイズ の複数実装
+function startMiniGame(type = 'quick') {
+    // type: 'quick' | 'slot' | 'quiz' - ランダム選択も可能
+    const gameType = type === 'random' ? ['quick','slot','quiz'][Math.floor(Math.random()*3)] : type;
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    const content = document.createElement('div');
+    content.className = 'modal-content';
 
-    const button = document.getElementById('mini-game-button');
-    let winner = null;
+    // ユーティリティ: ゲーム終了処理
+    function endGame(winnerIdx, reward) {
+            if (winnerIdx != null) {
+            const winnerName = playerNames[winnerIdx];
+            showOverlayMessage(`${winnerName} がミニゲームに勝利！` , 1600);
+            // 勝利演出: コンフェッティ + 対象プレイヤーの pop アニメ
+            showConfetti(1400);
+            // 対象の player 要素に pop クラスを付与
+            setTimeout(()=>{
+                const elems = document.querySelectorAll('.player');
+                for (let e of elems) {
+                    if (e.getAttribute('data-player-idx') === String(winnerIdx)) {
+                        e.classList.add('pop');
+                        setTimeout(()=>e.classList.remove('pop'), 700);
+                        break;
+                    }
+                }
+            }, 80);
+            // 報酬: アイテムまたは移動
+            if (reward && reward.type === 'move') {
+                playerPositions[winnerIdx] = Math.min(NUM_SQUARES-1, playerPositions[winnerIdx] + (reward.value||1));
+            } else if (reward && reward.type === 'item') {
+                giveItem(winnerIdx, reward.item);
+            }
+            drawBoard(); updatePlayerInfo();
+        }
+        modal.remove();
+        // ターン進行
+        currentPlayer = (currentPlayer + 1) % NUM_PLAYERS;
+        if (isCpuMode && currentPlayer >= NUM_PLAYERS - NUM_CPUS) setTimeout(cpTurn, 900);
+        else rollButton.disabled = false;
+    }
 
-    button.addEventListener('click', () => {
-        if (!winner) {
-            winner = playerNames[currentPlayer];
-            alert(`${winner} がミニゲームに勝利しました！`);
-            giveItem(currentPlayer, { name: 'ボーナスアイテム', desc: '1マス進む', type: 'move', value: 1 });
-            miniGameModal.remove();
-
-            // ターン進行を明示的に制御
-            currentPlayer = (currentPlayer + 1) % NUM_PLAYERS;
-            if (isCpuMode && currentPlayer >= NUM_PLAYERS - NUM_CPUS) {
-                setTimeout(cpTurn, 1000);
-            } else {
-                rollButton.disabled = false;
+    if (gameType === 'quick') {
+        content.innerHTML = `
+            <h3>ミニゲーム: 早押し！</h3>
+            <p>表示されたボタンをいち早く押した人が勝ち。</p>
+            <div id="quick-buttons" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px"></div>
+        `;
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+        const container = document.getElementById('quick-buttons');
+        let finished = false;
+        for (let i=0;i<NUM_PLAYERS;i++){
+            const btn = document.createElement('button'); btn.className='choice-btn'; btn.textContent=playerNames[i];
+            btn.addEventListener('click', ()=>{ if (finished) return; finished=true; endGame(i, {type:'item', item:{name:'勝利のコスメ', desc:'1マス進む', type:'move', value:1}}); });
+            container.appendChild(btn);
+        }
+        // CPU の反応をランダムでシミュレート
+        if (isCpuMode) {
+            for (let i=NUM_PLAYERS-NUM_CPUS;i<NUM_PLAYERS;i++){
+                ((idx)=>{ setTimeout(()=>{ if (!finished){ finished=true; endGame(idx, {type:'move', value:1}); } }, 600 + Math.random()*900); })(i);
             }
         }
-    });
+    } else if (gameType === 'slot') {
+        content.innerHTML = `
+            <h3>ミニゲーム: スロット！</h3>
+            <p>レバーを引いてリールを回転させ、揃えば大当たり！</p>
+            <div class="slot-reel" style="margin-top:12px">
+                <div id="slot-1" class="slot-cell">?</div>
+                <div id="slot-2" class="slot-cell">?</div>
+                <div id="slot-3" class="slot-cell">?</div>
+            </div>
+            <div style="margin-top:12px"><button id="slot-pull" class="choice-btn">レバーを引く</button></div>
+        `;
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+        const symbols = ['🍒','🍋','🍊','✨','7️⃣'];
+        const cells = [document.getElementById('slot-1'), document.getElementById('slot-2'), document.getElementById('slot-3')];
+        let spinning = false;
+        function spinOnce() {
+            // 一時的にランダム表示
+            cells.forEach(c=>{ c.textContent = symbols[Math.floor(Math.random()*symbols.length)]; c.classList.add('spin'); c.classList.remove('stop'); });
+        }
+        let spinIntervals = [];
+        document.getElementById('slot-pull').addEventListener('click', ()=>{
+            if (spinning) return; spinning = true;
+            rollButton.disabled = true;
+            // スピン演出: 各リールを別タイミングで止める
+            const durations = [900, 1300, 1700];
+            // start spinning visuals
+            const start = Date.now();
+            spinIntervals = cells.map((c, idx) => {
+                return setInterval(()=>{ c.textContent = symbols[Math.floor(Math.random()*symbols.length)]; c.classList.add('spin'); }, 80 + Math.random()*40);
+            });
+            // 停止タイミング
+            durations.forEach((d, i)=>{
+                setTimeout(()=>{
+                    clearInterval(spinIntervals[i]);
+                    const final = symbols[Math.floor(Math.random()*symbols.length)];
+                    cells[i].textContent = final;
+                    cells[i].classList.remove('spin');
+                    cells[i].classList.add('stop');
+                    // 当たり判定は全て停止した後で
+                    if (i === durations.length - 1) {
+                        const s1 = cells[0].textContent, s2 = cells[1].textContent, s3 = cells[2].textContent;
+                        const isJackpot = (s1===s2 && s2===s3);
+                        if (isJackpot) {
+                            // 当たり演出
+                            showConfetti(1600);
+                            // pop 効果を当てる
+                            setTimeout(()=>{
+                                const elems = document.querySelectorAll('.player');
+                                for (let e of elems) { if (e.getAttribute('data-player-idx') === String(currentPlayer)) { e.classList.add('pop'); setTimeout(()=>e.classList.remove('pop'),900); break; } }
+                            }, 120);
+                            endGame(currentPlayer, {type:'move', value:2});
+                        } else {
+                            // ハズレ: モーダルを閉じてターン進行
+                            modal.remove();
+                            currentPlayer = (currentPlayer + 1) % NUM_PLAYERS;
+                            if (isCpuMode && currentPlayer >= NUM_PLAYERS - NUM_CPUS) setTimeout(cpTurn, 900);
+                            else rollButton.disabled = false;
+                        }
+                        spinning = false;
+                    }
+                }, d);
+            });
+        });
+    } else if (gameType === 'quiz') {
+        // 簡単なクイズ問題を用意
+        const pool = [
+            {q:'日本の首都は？', a:'東京'},
+            {q:'2+3は？', a:'5'},
+            {q:'色の三原色の一つは？', a:'赤'}
+        ];
+        const item = pool[Math.floor(Math.random()*pool.length)];
+        content.innerHTML = `
+            <h3>ミニゲーム: クイズ！</h3>
+            <p>${item.q}</p>
+            <div style="margin-top:12px"><input id="quiz-answer" placeholder="答えを入力" style="padding:8px;font-size:16px"/></div>
+            <div style="margin-top:12px"><button id="quiz-submit" class="choice-btn">回答する</button></div>
+        `;
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+        document.getElementById('quiz-submit').addEventListener('click', ()=>{
+            const val = document.getElementById('quiz-answer').value.trim();
+            if (val === item.a) endGame(currentPlayer, {type:'item', item:{name:'知識のコスメ', desc:'1マス進む', type:'move', value:1}});
+            else { modal.remove(); currentPlayer = (currentPlayer + 1) % NUM_PLAYERS; if (isCpuMode && currentPlayer >= NUM_PLAYERS - NUM_CPUS) setTimeout(cpTurn, 900); else rollButton.disabled = false; }
+        });
+    }
 }
 
 // 特定のマスでミニゲームを開始
 function checkForMiniGame(position) {
     const miniGamePositions = [5, 10, 15]; // ミニゲームが発生するマス
     if (miniGamePositions.includes(position)) {
-        startMiniGame();
+        // 発生したらランダムでミニゲームを選ぶ
+        startMiniGame('random');
     }
 }
 
