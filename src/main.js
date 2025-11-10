@@ -201,6 +201,7 @@ const playerInfoDiv = document.getElementById("player-info");
 const rollButton = document.getElementById("roll-button");
 const resultDiv = document.getElementById("result");
 const overlayMessage = document.getElementById("overlay-message");
+const funButton = document.getElementById('fun-button');
 const choiceModal = document.getElementById("choice-modal");
 const choiceText = document.getElementById("choice-text");
 const choiceButtons = document.getElementById("choice-buttons");
@@ -294,6 +295,168 @@ const newItems = [
     { name: 'イベントキャンセラー', desc: '次のイベントを無効化', type: 'skip-event', value: 0 },
     { name: 'ワープシューズ', desc: '任意のマスに移動', type: 'warp', value: 0 }
 ];
+
+// ジョーク配列のデフォルト（fetchが失敗したときのフォールバック）
+let jokes = [
+    'サイコロが逃げ出した…追いかけると目が増えた！',
+    'プレイヤーA：「僕には運がある」 プレイヤーB：「いや、それはサイコロの話だ」',
+    'ゲーム内で最も信頼できるのは…セーブボタンだ（でもここにはない）',
+    '運が悪い？いいえ、ただ振りが強いだけです。',
+    'ショップで買えるのはアイテムだけじゃない、ユーモアもね。'
+];
+
+// 外部の jokes.json を読み込む（存在すれば上書き）
+(function loadJokes(){
+    fetch('jokes.json').then(r=>{
+        if (!r.ok) throw new Error('no jokes.json');
+        return r.json();
+    }).then(data=>{
+        if (Array.isArray(data) && data.length>0) jokes = data;
+    }).catch(()=>{
+        // フォールバックのまま
+    });
+})();
+
+// ジョーク表示用のオーバーレイを作る
+function showJoke() {
+    const text = jokes[Math.floor(Math.random() * jokes.length)];
+    // 一時的なモーダル風オーバーレイ
+    const el = document.createElement('div');
+    el.className = 'joke-overlay';
+    el.innerHTML = `<div class="joke-card">✨ ${text} ✨</div>`;
+    document.body.appendChild(el);
+    // 演出: 背景フラッシュ + コンフェッティ
+    flashBackground();
+    showCanvasConfetti(1200);
+    setTimeout(()=>{ el.classList.add('fade-out'); }, 1000);
+    setTimeout(()=>{ el.remove(); }, 1600);
+}
+
+function flashBackground() {
+    document.documentElement.classList.add('fun-flash');
+    setTimeout(()=>{ document.documentElement.classList.remove('fun-flash'); }, 900);
+}
+
+if (funButton) {
+    funButton.addEventListener('click', (e)=>{
+    e.currentTarget.disabled = true;
+    playClickSound();
+    showJoke();
+    setTimeout(()=>{ funButton.disabled = false; }, 1400);
+    });
+}
+
+// Ripple effect creator for buttons
+function createRipple(e) {
+    const btn = e.currentTarget || e.target;
+    const rect = btn.getBoundingClientRect();
+    const ripple = document.createElement('span');
+    ripple.className = 'ripple';
+    // position relative to button
+    const size = Math.max(rect.width, rect.height) * 0.9;
+    ripple.style.width = ripple.style.height = size + 'px';
+    const left = e.clientX - rect.left - size/2;
+    const top = e.clientY - rect.top - size/2;
+    ripple.style.left = left + 'px'; ripple.style.top = top + 'px';
+    // ensure container class
+    if (!btn.classList.contains('ripple-container')) btn.classList.add('ripple-container');
+    btn.appendChild(ripple);
+    // play sound
+    playClickSound();
+    setTimeout(() => { ripple.remove(); }, 600);
+}
+
+// Attach ripple handlers to primary buttons
+['roll-button','use-item-button','fun-button'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('pointerdown', createRipple);
+});
+
+// Canvasベースのシンプルな物理コンフェッティ
+function showCanvasConfetti(duration = 1500) {
+    // すでにある場合は reuse
+    let canvas = document.getElementById('confetti-canvas');
+    if (!canvas) {
+        canvas = document.createElement('canvas');
+        canvas.id = 'confetti-canvas';
+        canvas.style.position = 'fixed';
+        canvas.style.top = '0'; canvas.style.left = '0';
+        canvas.style.width = '100%'; canvas.style.height = '100%';
+        canvas.style.pointerEvents = 'none';
+        canvas.style.zIndex = 600;
+        document.body.appendChild(canvas);
+    }
+    const ctx = canvas.getContext('2d');
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    resize(); window.addEventListener('resize', resize);
+
+    const colors = ['#ffb8e6','#b8eaff','#b8ffb8','#ffeab8','#ffd2a6','#f8e7ff'];
+    const pieces = [];
+    const count = 60;
+    for (let i=0;i<count;i++){ pieces.push({
+        x: Math.random()*canvas.width,
+        y: -Math.random()*canvas.height*0.2,
+        vx: (Math.random()-0.5)*4,
+        vy: 2 + Math.random()*4,
+        size: 6 + Math.random()*10,
+        rot: Math.random()*Math.PI*2,
+        vr: (Math.random()-0.5)*0.2,
+        color: colors[Math.floor(Math.random()*colors.length)]
+    }); }
+
+    const start = performance.now();
+    function render(now){
+        const t = now - start;
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        for (const p of pieces) {
+            p.x += p.vx; p.y += p.vy; p.vy += 0.06; p.rot += p.vr;
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rot);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size*0.6);
+            ctx.restore();
+        }
+        if (t < duration) requestAnimationFrame(render);
+        else { ctx.clearRect(0,0,canvas.width,canvas.height); canvas.remove(); window.removeEventListener('resize', resize); }
+    }
+    requestAnimationFrame(render);
+}
+
+// --- WebAudioによる簡易効果音 ---
+let audioCtx = null;
+function ensureAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+function playClickSound() {
+    try {
+        ensureAudio();
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sine'; o.frequency.value = 900;
+        g.gain.value = 0.0001;
+        o.connect(g); g.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+        g.gain.exponentialRampToValueAtTime(0.12, now + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        o.start(now); o.stop(now + 0.14);
+    } catch (e) { /* ブラウザのオートプレイ制限により失敗する可能性がある */ }
+}
+
+function playClapSound() {
+    try {
+        ensureAudio();
+        // 白色雑音を短く鳴らして拍手風にする
+        const bufferSize = audioCtx.sampleRate * 0.15;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i=0;i<bufferSize;i++) data[i] = (Math.random()*2-1) * (1 - i/bufferSize);
+        const src = audioCtx.createBufferSource();
+        src.buffer = buffer;
+        const g = audioCtx.createGain(); g.gain.value = 0.6;
+        src.connect(g); g.connect(audioCtx.destination);
+        src.start();
+    } catch (e) { }
+}
 
 // アイテムを与える小イベントの追加（数カ所）
 function maybeGrantItem(playerIdx) {
@@ -918,3 +1081,7 @@ if (setupForm) {
     // フォームがなければ従来通り2人(CPU1)で開始
     setupGame("cpu", 2, 1);
 }
+
+document.querySelector('h1').addEventListener('click', () => {
+    alert('すごい！よくできました！');
+});

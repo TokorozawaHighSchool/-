@@ -421,6 +421,39 @@ h1 {
 /* プレイヤーアバター調整 */
 .player{ font-size:14px; width:48px; height:48px }
 
+/* 大きく目立つ補助ボタン */
+#use-item-button, #fun-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    font-size: 20px;
+    border-radius: 16px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(90deg, #ffd28a 0%, #ffb8e6 100%);
+    color: #5a1a4a;
+    box-shadow: 0 8px 28px rgba(200,140,255,0.12);
+    font-weight: 900;
+    transition: transform 120ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+#use-item-button:hover, #fun-button:hover { transform: translateY(-4px); box-shadow: 0 14px 40px rgba(200,140,255,0.16); }
+#use-item-button:active, #fun-button:active { transform: translateY(-1px) scale(0.995); }
+
+/* 重要: モバイルで横に並べても収まるように親にスタイルを付与する場合を想定 */
+.action-button-row { display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap }
+
+/* さらに見やすくするためのアイコン調整 */
+#use-item-button::before, #fun-button::before { content: ''; display:inline-block; width:28px; height:28px; border-radius:8px; background: rgba(255,255,255,0.6); }
+#use-item-button::before { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235a1a4a" d="M12 2L2 7l10 5 10-5-10-5zm0 7.4L5.1 7 12 4.6 18.9 7 12 9.4zM2 13v7l10 5 10-5v-7l-10 5L2 13z"/></svg>'); background-size:18px 18px; background-position:center; background-repeat:no-repeat }
+#fun-button::before { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%235a1a4a" d="M12 2l1.8 4.6L18.8 8l-4 3.1L15 16l-3-1.9L9 16l.2-4.9L5 8l5-1.4L12 2z"/></svg>'); background-size:18px 18px; background-position:center; background-repeat:no-repeat }
+
+/* Ripple effect */
+.ripple-container { position: relative; overflow: hidden; }
+.ripple { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.75); transform: scale(0); animation: ripple 520ms cubic-bezier(.2,.8,.2,1); pointer-events: none; }
+@keyframes ripple { to { transform: scale(6); opacity: 0; } }
+
 /* バッジを少し大きく（上書き） */
 .event-badge{ font-size:20px; width:34px; height:34px }
 
@@ -484,3 +517,23 @@ h1 {
 .slot-cell { width:56px; height:56px; border-radius:8px; background:#fff; display:flex; align-items:center; justify-content:center; font-size:28px; transition: transform 260ms ease; }
 .slot-cell.spin { transform: translateY(-8px) scale(0.98); filter: blur(0.6px); }
 .slot-cell.stop { transform: translateY(0) scale(1.02); box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
+
+/* ジョーク表示オーバーレイ */
+.joke-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none; z-index: 800;
+}
+.joke-card {
+    background: linear-gradient(90deg,#fff8ff,#fff0f8);
+    padding: 20px 28px; border-radius: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+    font-size: 20px; color: #b048a8; font-weight: 800; border: 2px solid rgba(200,160,240,0.12);
+    transform: translateY(0); transition: transform 320ms ease, opacity 300ms ease;
+}
+.joke-overlay .joke-card { animation: pop 420ms cubic-bezier(.2,.9,.3,1); }
+.joke-overlay.fade-out .joke-card { opacity: 0; transform: translateY(-10px); }
+
+/* 背景フラッシュ（短時間のキラッと演出） */
+.fun-flash body, .fun-flash .game-container, .fun-flash #game-container { animation: funPulse 900ms ease; }
+@keyframes funPulse { 0% { filter: none } 40% { filter: saturate(1.1) hue-rotate(6deg) } 100% { filter: none } }

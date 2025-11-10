@@ -5,6 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>すごろくゲーム</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        h1 {
+            font-size: 3rem;
+            color: #f8a5c2;
+            text-shadow: 2px 2px 4px #d1ccc0;
+            text-align: center;
+            margin-top: 20px;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(90deg, #f8a5c2, #f3d9fa);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: bubble 4s ease-in-out infinite;
+            padding: 15px;
+            border: 8px solid #fad9d9;
+            border-radius: 50px;
+            box-shadow: 0 0 15px #fad9d9, 0 0 25px #f3d9fa inset;
+        }
+
+        @keyframes bubble {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes sparkle {
+            0%, 100% {
+                text-shadow: 3px 3px 6px #ff1493, 0 0 10px #ff69b4;
+            }
+            50% {
+                text-shadow: 3px 3px 12px #ff69b4, 0 0 20px #ff1493;
+            }
+        }
+    </style>
 </head>
 <body>
     <div id="game-container">
@@ -46,11 +83,15 @@
             <h2>プレイヤー情報</h2>
             <!-- プレイヤーの情報をここに表示 -->
         </div>
-            <button id="roll-button">
-                <div id="dice" class="dice">🎲</div>
-                <span class="dice-label">サイコロを振る</span>
-            </button>
-        <button id="use-item-button" class="choice-btn" style="margin-left:12px">アイテムを使う</button>
+            <div class="action-button-row">
+                <button id="roll-button">
+                    <div id="dice" class="dice">🎲</div>
+                    <span class="dice-label">サイコロを振る</span>
+                </button>
+                <button id="use-item-button" class="choice-btn">アイテムを使う</button>
+                <!-- 面白くするボタン：ランダムジョーク＋演出 -->
+                <button id="fun-button" class="choice-btn">おもしろくする！</button>
+            </div>
         <div id="result"></div>
         <div id="overlay-message"></div>
         <div id="choice-modal" class="modal" style="display:none">
