@@ -183,6 +183,16 @@ body {
     background: linear-gradient(135deg, #f9eaff 0%, #eafffa 100%);
     margin: 0;
     padding: 0;
+    animation: gradientBackground 10s infinite alternate;
+}
+
+@keyframes gradientBackground {
+    0% {
+        background: linear-gradient(135deg, #f9eaff, #eafffa);
+    }
+    100% {
+        background: linear-gradient(135deg, #ffeaff, #b8eaff);
+    }
 }
 
 #game-container {
@@ -507,33 +517,67 @@ h1 {
     z-index: 20;
 }
 
-/* ホバーで表示 */
-.square:hover .square-tooltip {
-    display: block;
+/* ボタンのホバーアニメーションを追加 */
+button:hover {
+    transform: scale(1.1);
+    transition: transform 0.3s ease-in-out;
 }
 
-/* スロット用スタイル */
-.slot-reel { display:flex; gap:8px; align-items:center; justify-content:center }
-.slot-cell { width:56px; height:56px; border-radius:8px; background:#fff; display:flex; align-items:center; justify-content:center; font-size:28px; transition: transform 260ms ease; }
-.slot-cell.spin { transform: translateY(-8px) scale(0.98); filter: blur(0.6px); }
-.slot-cell.stop { transform: translateY(0) scale(1.02); box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
-
-/* ジョーク表示オーバーレイ */
-.joke-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    display: flex; align-items: center; justify-content: center;
-    pointer-events: none; z-index: 800;
+/* 背景にアニメーションを追加 */
+body {
+    animation: gradientBackground 10s infinite alternate;
 }
-.joke-card {
-    background: linear-gradient(90deg,#fff8ff,#fff0f8);
-    padding: 20px 28px; border-radius: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.12);
-    font-size: 20px; color: #b048a8; font-weight: 800; border: 2px solid rgba(200,160,240,0.12);
-    transform: translateY(0); transition: transform 320ms ease, opacity 300ms ease;
-}
-.joke-overlay .joke-card { animation: pop 420ms cubic-bezier(.2,.9,.3,1); }
-.joke-overlay.fade-out .joke-card { opacity: 0; transform: translateY(-10px); }
 
-/* 背景フラッシュ（短時間のキラッと演出） */
-.fun-flash body, .fun-flash .game-container, .fun-flash #game-container { animation: funPulse 900ms ease; }
-@keyframes funPulse { 0% { filter: none } 40% { filter: saturate(1.1) hue-rotate(6deg) } 100% { filter: none } }
+@keyframes gradientBackground {
+    0% {
+        background: linear-gradient(135deg, #f9eaff, #eafffa);
+    }
+    100% {
+        background: linear-gradient(135deg, #ffeaff, #b8eaff);
+    }
+}
+
+/* ボタンに虹色の枠を追加 */
+button {
+    border: 3px solid;
+    border-image-slice: 1;
+    border-width: 3px;
+    border-image-source: linear-gradient(45deg, #ff9a9e, #fad0c4, #fbc2eb);
+}
+
+/* --- Floating Menu (Yume-Kawaii) --- */
+.fab-menu-wrapper { position: fixed; right: 20px; bottom: 20px; z-index: 900; display:flex; flex-direction:column; align-items:flex-end; gap:12px; }
+.fab-main-btn { width:72px; height:72px; border:none; border-radius:50%; cursor:pointer; background:linear-gradient(135deg,#ffb8e6,#b8eaff); box-shadow:0 10px 28px rgba(200,140,255,0.35),0 0 0 6px rgba(255,255,255,0.6) inset; display:flex; align-items:center; justify-content:center; position:relative; transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s; }
+.fab-main-btn:hover { transform: translateY(-4px) rotate(6deg); box-shadow:0 14px 40px rgba(200,140,255,0.45),0 0 0 6px rgba(255,255,255,0.7) inset; }
+.fab-main-btn:active { transform: translateY(-1px) scale(.96); }
+.fab-main-btn .bars { position:relative; width:30px; height:20px; }
+.fab-main-btn .bars span { position:absolute; left:0; width:100%; height:4px; background:#fff; border-radius:4px; box-shadow:0 2px 6px rgba(0,0,0,0.12); transition: transform .4s, top .4s, opacity .3s; }
+.fab-main-btn .bars span:nth-child(1){ top:0; }
+.fab-main-btn .bars span:nth-child(2){ top:8px; }
+.fab-main-btn .bars span:nth-child(3){ top:16px; }
+.fab-main-btn.active .bars span:nth-child(1){ top:8px; transform:rotate(42deg); }
+.fab-main-btn.active .bars span:nth-child(2){ opacity:0; }
+.fab-main-btn.active .bars span:nth-child(3){ top:8px; transform:rotate(-42deg); }
+.fab-panel { position:absolute; bottom:88px; right:0; display:flex; flex-direction:column; gap:10px; padding:18px 16px 20px; background:linear-gradient(135deg,rgba(255,255,255,0.92),rgba(255,240,252,0.95)); border:3px solid rgba(255,200,250,0.7); border-radius:28px; box-shadow:0 12px 48px rgba(180,140,255,0.35),0 0 0 8px rgba(255,255,255,0.65) inset; backdrop-filter: blur(6px); width:220px; transform-origin: 80% 100%; transform: scale(.6) translateY(18px); opacity:0; pointer-events:none; transition: transform .38s cubic-bezier(.3,1.4,.3,1), opacity .32s; }
+.fab-panel.open { transform: scale(1) translateY(0); opacity:1; pointer-events:auto; }
+.fab-panel h4 { margin:0 0 4px; font-size:14px; letter-spacing:.08em; font-weight:800; color:#b048a8; text-shadow:0 2px 8px #ffeaff; }
+.fab-panel button.menu-action { width:100%; border:none; border-radius:16px; padding:12px 14px; background:linear-gradient(90deg,#ffb8e6,#b8eaff); color:#5a1a4a; font-weight:700; font-size:15px; cursor:pointer; box-shadow:0 6px 20px rgba(200,140,255,0.25); display:flex; align-items:center; gap:8px; position:relative; overflow:hidden; }
+.fab-panel button.menu-action:hover { transform: translateY(-3px); box-shadow:0 10px 30px rgba(200,140,255,0.35); }
+.fab-panel button.menu-action:active { transform: translateY(-1px) scale(.97); }
+.fab-panel button.menu-action .mini-icon { width:28px; height:28px; border-radius:10px; background:linear-gradient(135deg,#fff,#ffeafd); display:flex; align-items:center; justify-content:center; font-size:16px; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+
+/* Hide original floating utility buttons when replaced by menu (JS will add a class) */
+.hide-floating-buttons #joke-floating-btn, .hide-floating-buttons #color-floating-btn, .hide-floating-buttons #numbergame-floating-btn { display:none !important; }
+/* メニューを右上配置に変更 */
+.fab-menu-wrapper { top: 16px; bottom: auto; right: 16px; align-items: flex-end; }
+.fab-panel { bottom: auto; top: 84px; right: 0; transform-origin: 80% 0%; }
+
+/* --- Unified Fancy Button Animations --- */
+button.menu-action-inited { position:relative; overflow:hidden; }
+button.menu-action-inited::after { content:""; position:absolute; inset:0; background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.7),rgba(255,255,255,0) 60%); opacity:0; transition:opacity .5s; pointer-events:none; }
+button.menu-action-inited:hover::after { opacity:1; }
+button.menu-action-inited:active { filter:brightness(.96); }
+
+/* Ripple (lightweight) */
+button.menu-action-inited.rippling span.ripple-mini { animation:ripple-mini .6s ease forwards; }
+@keyframes ripple-mini { 0% { transform:scale(0); opacity:.6;} 100% { transform:scale(6); opacity:0;} }

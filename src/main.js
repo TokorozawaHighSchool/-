@@ -477,15 +477,79 @@ if (useItemButton) useItemButton.addEventListener('click', openItemModal);
 if (closeItemModal) closeItemModal.addEventListener('click', closeItemModalFn);
 if (closeTargetModal) closeTargetModal.addEventListener('click', ()=>{ targetModal.style.display='none'; renderItemList(); });
 
+// ==== Rebuild top-right floating menu & actions (replace stray buttons) ====
+// 古い単独ジョークボタンを削除（残っていたら）
+(function removeLegacyFloatingButtons(){
+  const legacy = document.querySelectorAll('#joke-floating-btn, #color-floating-btn, #numbergame-floating-btn');
+  legacy.forEach(el=>el.remove());
+  // 既に body 直下に作られている bottom-right ジョークボタンも検知
+  document.querySelectorAll('body > button').forEach(b=>{
+    if (b.textContent && b.textContent.includes('ジョーク')) b.remove();
+  });
+})();
 
-// オーバーレイ表示関数
-function showOverlayMessage(text, duration = 2000) {
-    overlayMessage.textContent = text;
-    overlayMessage.style.display = "block";
-    setTimeout(() => {
-        overlayMessage.style.display = "none";
-    }, duration);
+// アクション関数（重複生成防止）
+function triggerRandomJoke(){
+  const randomJoke = jokes[Math.floor(Math.random()*jokes.length)];
+  const existing = document.querySelector('.center-joke-display');
+  if (existing) existing.remove();
+  const jokeDisplay = document.createElement('div');
+  jokeDisplay.className = 'center-joke-display';
+  Object.assign(jokeDisplay.style, {
+    position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',padding:'26px 40px',background:'linear-gradient(135deg,#ffeaff,#eafffa)',color:'#5a1a4a',fontSize:'1.7rem',fontWeight:'bold',textAlign:'center',borderRadius:'20px',boxShadow:'0 10px 36px rgba(180,140,255,.38)',zIndex:1300,maxWidth:'70vw',lineHeight:'1.4'
+  });
+  jokeDisplay.textContent = randomJoke;
+  document.body.appendChild(jokeDisplay);
+  setTimeout(()=>{ jokeDisplay.style.transition='opacity .6s'; jokeDisplay.style.opacity='0'; setTimeout(()=>jokeDisplay.remove(),620); }, 3200);
 }
+function triggerRandomBg(){
+  // 元のボディグラデは残しつつ game-container だけ色変化
+  const gc = document.getElementById('game-container') || document.body;
+  const hue = Math.floor(Math.random()*360);
+  gc.style.transition='background 0.9s';
+  gc.style.background = `linear-gradient(135deg, hsl(${hue} 90% 94%), hsl(${(hue+40)%360} 95% 88%))`;
+}
+// openNumberGame は後方に既に定義されているので再利用。
+
+// 既存の古い initFloatingMenu を置き換え（重複防止）
+(function initUnifiedMenu(){
+  // 旧メニュー消去
+  document.querySelectorAll('.fab-menu-wrapper').forEach(w=>w.remove());
+  const wrapper = document.createElement('div');
+  wrapper.className='fab-menu-wrapper'; // CSS 側で top/right 配置済み
+
+  const mainBtn = document.createElement('button');
+  mainBtn.className='fab-main-btn';
+  mainBtn.setAttribute('aria-label','クイックメニュー');
+  mainBtn.innerHTML = '<div class="bars"><span></span><span></span><span></span></div>';
+
+  const panel = document.createElement('div');
+  panel.className='fab-panel';
+  panel.innerHTML='<h4>クイックメニュー</h4>';
+
+  function addAction(label, icon, fn){
+    const b=document.createElement('button');
+    b.className='menu-action';
+    b.innerHTML=`<span class="mini-icon">${icon}</span><span>${label}</span>`;
+    b.addEventListener('click',()=>{ fn(); panel.classList.remove('open'); mainBtn.classList.remove('active'); });
+    panel.appendChild(b);
+  }
+
+  addAction('ジョーク','✨', triggerRandomJoke);
+  addAction('背景チェンジ','🎨', triggerRandomBg);
+  addAction('数字当て','🔢', ()=>openNumberGame());
+
+  mainBtn.addEventListener('click',()=>{
+    const open = panel.classList.toggle('open');
+    mainBtn.classList.toggle('active', open);
+  });
+  document.addEventListener('click', e=>{
+    if(!wrapper.contains(e.target)) { panel.classList.remove('open'); mainBtn.classList.remove('active'); }
+  });
+
+  wrapper.appendChild(mainBtn); wrapper.appendChild(panel);
+  document.body.appendChild(wrapper);
+})();
 
 // ボード描画
 function drawBoard() {
@@ -1085,3 +1149,86 @@ if (setupForm) {
 document.querySelector('h1').addEventListener('click', () => {
     alert('すごい！よくできました！');
 });
+
+// 旧ジョーク単独ボタン生成ブロックを無効化（既に削除済みだが安全策）
+// (function(){ /* removed legacy floating joke button */ })();
+
+// 追加: 汎用ボタンエフェクトユーティリティ
+function attachFancyButtonEffects(root=document){
+  const btns = root.querySelectorAll('button:not(.fab-main-btn):not(.menu-action-inited)');
+  btns.forEach(b=>{
+    b.classList.add('menu-action-inited');
+    b.style.transition = 'transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .3s';
+    b.addEventListener('pointerenter',()=>{ b.style.transform='translateY(-3px)'; });
+    b.addEventListener('pointerleave',()=>{ b.style.transform=''; });
+    b.addEventListener('pointerdown',()=>{ b.style.transform='translateY(0) scale(.95)'; });
+    b.addEventListener('pointerup',()=>{ b.style.transform='translateY(-3px)'; });
+  });
+}
+
+// 数字当てゲーム I/F を安全に開くためのラッパ（多重起動防止 & 次フレーム実行）
+function safeOpenNumberGame(){
+  if (document.getElementById('number-game-screen')) return; // 既に開いている
+  requestAnimationFrame(()=>{ openNumberGame(); setTimeout(()=>attachFancyButtonEffects(document.getElementById('number-game-screen')),30); });
+}
+
+// メニュー再初期化で openNumberGame を safeOpenNumberGame に変更（既存メニューがあれば差し替え）
+(function patchMenuActions(){
+  const panel = document.querySelector('.fab-panel');
+  if (!panel) return;
+  const buttons = Array.from(panel.querySelectorAll('button.menu-action'));
+  buttons.forEach(b=>{
+    if (b.textContent.includes('数字当て')) { b.replaceWith(b.cloneNode(true)); }
+  });
+  // 再取得してハンドラ再接続
+  const refreshed = Array.from(document.querySelectorAll('.fab-panel button.menu-action'));
+  refreshed.forEach(b=>{
+    if (b.textContent.includes('ジョーク')) { b.onclick = ()=>{ triggerRandomJoke(); }; }
+    else if (b.textContent.includes('背景')) { b.onclick = ()=>{ triggerRandomBg(); }; }
+    else if (b.textContent.includes('数字当て')) { b.onclick = ()=>{ safeOpenNumberGame(); }; }
+  });
+})();
+
+// 初期ボタンエフェクト適用
+attachFancyButtonEffects();
+
+// openNumberGame 内末尾でエフェクト適用できるようフックを追加するため openNumberGame を再ラップ
+const _originalOpenNumberGame = openNumberGame;
+openNumberGame = function(){
+  _originalOpenNumberGame();
+  attachFancyButtonEffects(document.getElementById('number-game-screen'));
+};
+
+// ===== Fix: Ensure openNumberGame reference & menu action binding after all definitions =====
+(function ensureNumberGameBinding(){
+  // 1) 最新の openNumberGame が存在しなければ何もしない
+  if (typeof openNumberGame !== 'function') return;
+  // 2) 既存メニューを取得
+  const wrapper = document.querySelector('.fab-menu-wrapper');
+  const panel = document.querySelector('.fab-panel');
+  if (!wrapper || !panel) return;
+  // 3) 既存メニュー内の数字当てボタンを探し直す（ラベル部分を正規化）
+  const gameBtn = Array.from(panel.querySelectorAll('button.menu-action'))
+    .find(b => /数字当て/.test(b.textContent));
+  if (gameBtn) {
+    // 旧ハンドラ除去
+    gameBtn.replaceWith(gameBtn.cloneNode(true));
+    const fresh = Array.from(panel.querySelectorAll('button.menu-action'))
+      .find(b => /数字当て/.test(b.textContent));
+    if (fresh) {
+      fresh.addEventListener('click', e => {
+        e.stopPropagation();
+        if (!document.getElementById('number-game-screen')) {
+          // CSS開閉状態解除
+          panel.classList.remove('open');
+          wrapper.querySelector('.fab-main-btn')?.classList.remove('active');
+          // 遅延して起動（閉じるアニメと競合しないよう）
+          setTimeout(()=>{ try { openNumberGame(); } catch(err){ console.warn('openNumberGame error', err); } }, 30);
+        }
+      });
+    }
+  }
+})();
+
+// ===== Add global click debug helper (開発用: 必要ならコメントアウト) =====
+// document.addEventListener('click', e => { console.log('click', e.target); });
