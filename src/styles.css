@@ -400,8 +400,12 @@ h1 {
     border: none;
     cursor: pointer;
     font-weight: 700;
-    background: linear-gradient(90deg, #ffb8e6 0%, #b8eaff 100%);
-    color: #fff;
+    background: linear-gradient(90deg, #ffb8e6 0%, #b8eaff 100%) !important;
+    color: #ffffff !important;
+}
+.menu-btn {
+    background: linear-gradient(90deg, #ffb8e6 0%, #b8eaff 100%) !important;
+    color: #ffffff !important;
 }
 .choice-btn.secondary {
     background: linear-gradient(90deg, #b8eaff 0%, #ffb8e6 100%);
@@ -546,7 +550,7 @@ button {
 }
 
 /* --- Floating Menu (Yume-Kawaii) --- */
-.fab-menu-wrapper { position: fixed; right: 20px; bottom: 20px; z-index: 900; display:flex; flex-direction:column; align-items:flex-end; gap:12px; }
+.fab-menu-wrapper { position: fixed; right: 16px; top: 16px; z-index: 900; display:flex; flex-direction:column; align-items:flex-end; gap:12px; }
 .fab-main-btn { width:72px; height:72px; border:none; border-radius:50%; cursor:pointer; background:linear-gradient(135deg,#ffb8e6,#b8eaff); box-shadow:0 10px 28px rgba(200,140,255,0.35),0 0 0 6px rgba(255,255,255,0.6) inset; display:flex; align-items:center; justify-content:center; position:relative; transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s; }
 .fab-main-btn:hover { transform: translateY(-4px) rotate(6deg); box-shadow:0 14px 40px rgba(200,140,255,0.45),0 0 0 6px rgba(255,255,255,0.7) inset; }
 .fab-main-btn:active { transform: translateY(-1px) scale(.96); }
@@ -558,7 +562,8 @@ button {
 .fab-main-btn.active .bars span:nth-child(1){ top:8px; transform:rotate(42deg); }
 .fab-main-btn.active .bars span:nth-child(2){ opacity:0; }
 .fab-main-btn.active .bars span:nth-child(3){ top:8px; transform:rotate(-42deg); }
-.fab-panel { position:absolute; bottom:88px; right:0; display:flex; flex-direction:column; gap:10px; padding:18px 16px 20px; background:linear-gradient(135deg,rgba(255,255,255,0.92),rgba(255,240,252,0.95)); border:3px solid rgba(255,200,250,0.7); border-radius:28px; box-shadow:0 12px 48px rgba(180,140,255,0.35),0 0 0 8px rgba(255,255,255,0.65) inset; backdrop-filter: blur(6px); width:220px; transform-origin: 80% 100%; transform: scale(.6) translateY(18px); opacity:0; pointer-events:none; transition: transform .38s cubic-bezier(.3,1.4,.3,1), opacity .32s; }
+.fab-panel { position:absolute; top:84px; right:0; display:flex; flex-direction:column; gap:10px; padding:18px 16px 20px; background:linear-gradient(135deg,rgba(255,255,255,0.92),rgba(255,240,252,0.95)); border:3px solid rgba(255,200,250,0.7); border-radius:28px; box-shadow:0 12px 48px rgba(180,140,255,0.35),0 0 0 8px rgba(255,255,255,0.65) inset; backdrop-filter: blur(6px); width:220px; transform-origin: 80% 0%; transform: scale(.6) translateY(18px); opacity:0; pointer-events:none; transition: transform .38s cubic-bezier(.3,1.4,.3,1), opacity .32s; }
+.fab-panel.open { transform: scale(1) translateY(0); opacity:1; pointer-events:auto; }
 .fab-panel.open { transform: scale(1) translateY(0); opacity:1; pointer-events:auto; }
 .fab-panel h4 { margin:0 0 4px; font-size:14px; letter-spacing:.08em; font-weight:800; color:#b048a8; text-shadow:0 2px 8px #ffeaff; }
 .fab-panel button.menu-action { width:100%; border:none; border-radius:16px; padding:12px 14px; background:linear-gradient(90deg,#ffb8e6,#b8eaff); color:#5a1a4a; font-weight:700; font-size:15px; cursor:pointer; box-shadow:0 6px 20px rgba(200,140,255,0.25); display:flex; align-items:center; gap:8px; position:relative; overflow:hidden; }
@@ -581,3 +586,35 @@ button.menu-action-inited:active { filter:brightness(.96); }
 /* Ripple (lightweight) */
 button.menu-action-inited.rippling span.ripple-mini { animation:ripple-mini .6s ease forwards; }
 @keyframes ripple-mini { 0% { transform:scale(0); opacity:.6;} 100% { transform:scale(6); opacity:0;} }
+/* --- YumeKawaii bigger header & spacing overrides --- */
+/* 見出しを大きく、上余白を増やす */
+h1 { margin: 36px 0 28px 0; font-size: 3.6rem; }
+/* コンテナ上部に余白追加 */
+#game-container { padding-top: 24px; }
+/* 設定パネルを少し大きく */
+#setup-container { width: 720px; margin: 8px auto 36px auto; }
+#setup-form label { font-size: 1.5rem; padding: 10px 20px; }
+#setup-form select { font-size: 1.4rem; padding: 8px 20px; }
+#setup-form button[type="submit"] { margin-top: 16px; padding: 18px 64px; font-size: 1.85rem; }
+/* ボードの存在感アップ */
+#board { min-height: 240px; gap: 8px; padding: 22px 14px; }
+/* ボタンサイズ拡大 */
+.choice-btn { padding: 12px 18px; border-radius: 14px; }
+#roll-button { padding: 14px 42px; font-size: 24px; }
+/* メニューの間隔を広げる */
+#game-menu { margin: 16px 0 22px; }
+/* 画面いっぱいに広がるメニューカード */
+.menu-grid { width: 98vw; max-width: 1800px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; grid-template-areas: 'top-left top-right' 'bottom-left bottom-right'; gap: 12px; padding: 0 12px; }
+.menu-card.top-left { grid-area: top-left; }
+.menu-card.top-right { grid-area: top-right; }
+.menu-card.bottom-left { grid-area: bottom-left; }
+.menu-card.bottom-right { grid-area: bottom-right; }
+.menu-card { display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:8px; background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,240,252,0.95)); border: 4px solid #f7cfff; border-radius: 24px; box-shadow: 0 8px 28px rgba(200,140,255,0.18); padding: 12px; min-height: 26vh; }
+.menu-btn { width: 100%; height: 18vh; font-size: 2.2rem; border-radius: 18px; }
+.menu-desc { margin: 0; font-size: 1rem; color: #b48fff; text-align: center; }
+/* モバイル対応（1列） */
+@media (max-width: 768px) {
+    .menu-grid { grid-template-columns: 1fr; grid-template-areas: 'bottom' 'top-left' 'top-right'; }
+    .menu-btn { height: 14vh; font-size: 1.8rem; }
+    .menu-card { min-height: 22vh; }
+}

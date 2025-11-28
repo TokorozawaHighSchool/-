@@ -6,80 +6,80 @@ let currentPlayer = 0;
 let playerNames = [];
 let isCpuMode = true;
 
-// 女の子の名前リスト
-const girlNames = ['さくら', 'あかり', 'ひまり', 'ゆい', 'りん', 'ほのか', 'みお', 'ななみ'];
+// 汎用プレイヤー名リスト（人生ゲーム風）
+const defaultNames = ['さくら', 'はると', 'ゆい', 'そうた', 'りん', 'みお', 'だいき', 'ななみ'];
 
 // プレイヤー名を設定する関数
 function assignPlayerNames() {
     playerNames = [];
     for (let i = 0; i < NUM_PLAYERS; i++) {
         if (isCpuMode && i >= NUM_PLAYERS - NUM_CPUS) {
-            playerNames.push(girlNames[(i + 1) % girlNames.length] + '（CPU）');
+            playerNames.push(defaultNames[(i + 1) % defaultNames.length] + '（CPU）');
         } else {
-            playerNames.push(girlNames[i % girlNames.length]);
+            playerNames.push(defaultNames[i % defaultNames.length]);
         }
     }
 }
 
-// イベント一覧（理由付きの構造化データ）
-// effect: "none" | "move" | "reroll" | "skip"
+// イベント一覧（人生ゲーム風）
+// effect: "none" | "move" | "reroll" | "skip" | "choice"
 // value: move の場合の移動量（正: 進む、負: 戻る）
 const events = [
-    { text: "Diorのリップが折れる…メイク直しで遅刻、1マス戻る", effect: "move", value: -1 },
-    { text: "新しいアイシャドウが大当たり！テンション上がって2マス進む", effect: "move", value: 2 },
-    { text: "ヘアアレンジが大失敗…顔が見えない、1マス戻る", effect: "move", value: -1 },
-    { text: "朝のランニングで気分爽快！1マス進む", effect: "move", value: 1 },
-    { text: "友達に褒められた！自信が出てもう一度サイコロを振れる", effect: "reroll", value: 0 },
-    { text: "新作スカートが届いたけどサイズが合わない…試着で時間かかって2マス戻る", effect: "move", value: -2 },
-    { text: "ネイルがキレイに決まった！気分上昇で2マス進む", effect: "move", value: 2 },
-    { text: "メイク落としが切れた…今日はお休み、次のターンをスキップ", effect: "skip", value: 0 },
-    { text: "カフェで運命の出会い…舞い上がって1マス進む", effect: "move", value: 1 },
-    { text: "撮影リハーサルで好感触！もっと頑張れる、1マス進む", effect: "move", value: 1 },
-    { text: "新しいヘアピンが折れた…ショックで1マス戻る", effect: "move", value: -1 },
-    { text: "友達とメイク会でテクを盗めた！2マス進む", effect: "move", value: 2 },
-    { text: "コスメがセール！運良くゲットして1マス進む", effect: "move", value: 1 },
-    { text: "靴擦れ…歩きづらくて1マス戻る", effect: "move", value: -1 },
-    { text: "モデルのオーディションで良い評価！もう一度サイコロを振れる", effect: "reroll", value: 0 },
-    { text: "動画がバズった！注目を浴びて2マス進む", effect: "move", value: 2 },
-    { text: "撮影で衣装トラブル…修正に時間がかかり2マス戻る", effect: "move", value: -2 },
-    { text: "メイクアップアーティストに褒められた！気分上々で1マス進む", effect: "move", value: 1 },
-    { text: "ナイトケアを忘れた…肌トラブルで次のターンをスキップ", effect: "skip", value: 0 },
-    { text: "何も起こらない — 今日は静かな日。", effect: "none", value: 0 },
-    { text: "メイクブラシを忘れた！代用品で手間取り1マス戻る", effect: "move", value: -1 },
-    { text: "スタイリストに褒められてやる気UP、1マス進む", effect: "move", value: 1 }
+    { text: "就職活動が好調！内定に近づく、2マス進む", effect: "move", value: 2 },
+    { text: "交通渋滞に巻き込まれる…約束に遅刻、1マス戻る", effect: "move", value: -1 },
+    { text: "ボーナス支給！うれしくて1マス進む", effect: "move", value: 1 },
+    { text: "家賃の更新で出費…節約モード、1マス戻る", effect: "move", value: -1 },
+    { text: "健康診断A判定！やる気が出てもう一度サイコロ", effect: "reroll", value: 0 },
+    { text: "資格試験に合格！2マス進む", effect: "move", value: 2 },
+    { text: "スマホを落として修理…2マス戻る", effect: "move", value: -2 },
+    { text: "税金の還付！1マス進む", effect: "move", value: 1 },
+    { text: "風邪をひいた…次のターンをスキップ", effect: "skip", value: 0 },
+    { text: "引っ越しがスムーズに完了！1マス進む", effect: "move", value: 1 },
+    { text: "投資がうまくいった！2マス進む", effect: "move", value: 2 },
+    { text: "車のタイヤがパンク…1マス戻る", effect: "move", value: -1 },
+    { text: "友人の結婚式に参加して刺激を受ける、1マス進む", effect: "move", value: 1 },
+    { text: "家電が故障…買い替えで出費、1マス戻る", effect: "move", value: -1 },
+    { text: "副業が軌道に乗る！もう一度サイコロ", effect: "reroll", value: 0 },
+    { text: "SNSでバズる！注目を浴びて2マス進む", effect: "move", value: 2 },
+    { text: "仕事でミス…反省して2マス戻る", effect: "move", value: -2 },
+    { text: "休日にリフレッシュ！1マス進む", effect: "move", value: 1 },
+    { text: "引越し準備でバタバタ…次のターンをスキップ", effect: "skip", value: 0 },
+    { text: "今日は穏やか、何も起こらない。", effect: "none", value: 0 },
+    { text: "財布を落とすも無事戻る…少し落ち込んで1マス戻る", effect: "move", value: -1 },
+    { text: "上司に評価される！1マス進む", effect: "move", value: 1 }
 ];
 
 // ストーリー性のある固定イベントマス（0ベースのインデックス）
 const fixedEvents = {
-    4: { text: "一次オーディション通過！運気上昇で2マス進む", effect: "move", value: 2 },
-    11: { text: "投稿がバズって注目を集める！2マス進む", effect: "move", value: 2 },
-    17: { text: "ヘアサロンで大失敗…挫折して2マス戻る", effect: "move", value: -2 },
-    22: { text: "雑誌撮影の大仕事！準備で次のターンをスキップ", effect: "skip", value: 0 }
+    4: { text: "就職決定！スタートダッシュで2マス進む", effect: "move", value: 2 },
+    11: { text: "昇進！責任増すが気合い十分、2マス進む", effect: "move", value: 2 },
+    17: { text: "事故に遭うも軽傷…通院で2マス戻る", effect: "move", value: -2 },
+    22: { text: "大引っ越し！準備で次のターンをスキップ", effect: "skip", value: 0 }
 };
 
 // テスト用：いくつかのマスを choice 型にして選択肢を追加
 fixedEvents[6] = {
-    text: "フォトシュートで2つの提案が来た！",
+    text: "住宅購入を検討！どうする？",
     effect: "choice",
     options: [
-        { text: "大胆にポーズして2マス進む", effect: "move", value: 2 },
-        { text: "安全に小幅進行（1マス）", effect: "move", value: 1 }
+        { text: "思い切って購入、ローンは重いが2マス進む", effect: "move", value: 2 },
+        { text: "今回は見送り、慎重に1マス進む", effect: "move", value: 1 }
     ]
 };
 fixedEvents[10] = {
-    text: "コラボの話が来た。時間がかかるかも…",
+    text: "転職の話が来た。どうする？",
     effect: "choice",
     options: [
-        { text: "即決で参加→1マス進む", effect: "move", value: 1 },
-        { text: "熟考して機会を逃す→1マス戻る", effect: "move", value: -1 }
+        { text: "挑戦してステップアップ、1マス進む", effect: "move", value: 1 },
+        { text: "現職に残って安定を取る、1マス戻る", effect: "move", value: -1 }
     ]
 };
 fixedEvents[14] = {
-    text: "シークレットアイテムを見つけた！使う？",
+    text: "ラッキーチャンス！この運を使う？",
     effect: "choice",
     options: [
-        { text: "使って一気に3マス進む", effect: "move", value: 3 },
-        { text: "温存して再振り権を得る", effect: "reroll", value: 0 }
+        { text: "一気に前進、3マス進む", effect: "move", value: 3 },
+        { text: "温存してもう一度サイコロ", effect: "reroll", value: 0 }
     ]
 };
 
@@ -178,21 +178,20 @@ function animatePlayerMovement(playerIdx, fromIdx, toIdx, cb) {
 // イベントに対応する絵文字アイコンを返す
 function getEventIcon(event) {
     if (!event || !event.text) return "";
-    // テキストに含まれるキーワードで優先的に決める
-    if (event.text.includes("リップ") || event.text.includes("メイク")) return "💄";
-    if (event.text.includes("アイシャドウ") || event.text.includes("ネイル")) return "💅";
-    if (event.text.includes("スカート") || event.text.includes("試着") || event.text.includes("衣装")) return "👗";
-    if (event.text.includes("出会い") || event.text.includes("褒められ")) return "💖";
-    if (event.text.includes("オーディション") || event.text.includes("モデル")) return "🎤";
-    if (event.text.includes("バズ") || event.text.includes("投稿")) return "🔥";
-    if (event.text.includes("撮影") || event.text.includes("撮影リハーサル")) return "📸";
-    if (event.text.includes("靴") || event.text.includes("靴擦れ")) return "👠";
-    if (event.text.includes("肌") || event.text.includes("ナイトケア")) return "🧴";
+    // 人生ゲーム風のキーワードで決定
+    if (event.text.includes("就職") || event.text.includes("転職") || event.text.includes("昇進")) return "💼";
+    if (event.text.includes("税金") || event.text.includes("家賃") || event.text.includes("出費")) return "💸";
+    if (event.text.includes("投資") || event.text.includes("副業") || event.text.includes("ボーナス")) return "📈";
+    if (event.text.includes("引っ越し") || event.text.includes("住宅")) return "🏠";
+    if (event.text.includes("健康") || event.text.includes("風邪")) return "🩺";
+    if (event.text.includes("事故") || event.text.includes("渋滞") || event.text.includes("パンク")) return "🚧";
+    if (event.text.includes("結婚") || event.text.includes("友人")) return "🎉";
     // effect ベースのフォールバック
-    if (event.effect === "move") return event.value > 0 ? "✨" : "😭";
+    if (event.effect === "move") return event.value > 0 ? "✨" : "↩️";
     if (event.effect === "reroll") return "🎲";
-    if (event.effect === "skip") return "😴";
-    return "🌸";
+    if (event.effect === "skip") return "⏭️";
+    if (event.effect === "choice") return "❓";
+    return "🧭";
 }
 
 
@@ -512,43 +511,52 @@ function triggerRandomBg(){
 // openNumberGame は後方に既に定義されているので再利用。
 
 // 既存の古い initFloatingMenu を置き換え（重複防止）
+// 三本線メニュー（クイックメニュー）を復活。ただし数字あては表メニューに統一し、三本線からは削除。
 (function initUnifiedMenu(){
-  // 旧メニュー消去
-  document.querySelectorAll('.fab-menu-wrapper').forEach(w=>w.remove());
-  const wrapper = document.createElement('div');
-  wrapper.className='fab-menu-wrapper'; // CSS 側で top/right 配置済み
+    // 旧メニュー消去
+    document.querySelectorAll('.fab-menu-wrapper').forEach(w=>w.remove());
+    const wrapper = document.createElement('div');
+    wrapper.className='fab-menu-wrapper';
 
-  const mainBtn = document.createElement('button');
-  mainBtn.className='fab-main-btn';
-  mainBtn.setAttribute('aria-label','クイックメニュー');
-  mainBtn.innerHTML = '<div class="bars"><span></span><span></span><span></span></div>';
+    const mainBtn = document.createElement('button');
+    mainBtn.className='fab-main-btn';
+    mainBtn.setAttribute('aria-label','クイックメニュー');
+    mainBtn.innerHTML = '<div class="bars"><span></span><span></span><span></span></div>';
 
-  const panel = document.createElement('div');
-  panel.className='fab-panel';
-  panel.innerHTML='<h4>クイックメニュー</h4>';
+    const panel = document.createElement('div');
+    panel.className='fab-panel';
+    panel.innerHTML='<h4>クイックメニュー</h4>';
 
-  function addAction(label, icon, fn){
-    const b=document.createElement('button');
-    b.className='menu-action';
-    b.innerHTML=`<span class="mini-icon">${icon}</span><span>${label}</span>`;
-    b.addEventListener('click',()=>{ fn(); panel.classList.remove('open'); mainBtn.classList.remove('active'); });
-    panel.appendChild(b);
-  }
+    function addAction(label, icon, fn){
+        const b=document.createElement('button');
+        b.className='menu-action';
+        b.innerHTML=`<span class="mini-icon">${icon}</span><span>${label}</span>`;
+        b.addEventListener('click',()=>{ fn(); panel.classList.remove('open'); mainBtn.classList.remove('active'); });
+        panel.appendChild(b);
+    }
 
-  addAction('ジョーク','✨', triggerRandomJoke);
-  addAction('背景チェンジ','🎨', triggerRandomBg);
-  addAction('数字当て','🔢', ()=>openNumberGame());
+    addAction('ジョーク','✨', ()=>{
+        const randomJoke = jokes[Math.floor(Math.random()*jokes.length)];
+        showOverlayMessage(randomJoke, 1400);
+    });
+    addAction('背景チェンジ','🎨', ()=>{
+        const gc = document.getElementById('game-container') || document.body;
+        const hue = Math.floor(Math.random()*360);
+        gc.style.transition='background 0.9s';
+        gc.style.background = `linear-gradient(135deg, hsl(${hue} 90% 94%), hsl(${(hue+40)%360} 95% 88%))`;
+    });
+    // 数字あてはここには追加しない
 
-  mainBtn.addEventListener('click',()=>{
-    const open = panel.classList.toggle('open');
-    mainBtn.classList.toggle('active', open);
-  });
-  document.addEventListener('click', e=>{
-    if(!wrapper.contains(e.target)) { panel.classList.remove('open'); mainBtn.classList.remove('active'); }
-  });
+    mainBtn.addEventListener('click',()=>{
+        const open = panel.classList.toggle('open');
+        mainBtn.classList.toggle('active', open);
+    });
+    document.addEventListener('click', e=>{
+        if(!wrapper.contains(e.target)) { panel.classList.remove('open'); mainBtn.classList.remove('active'); }
+    });
 
-  wrapper.appendChild(mainBtn); wrapper.appendChild(panel);
-  document.body.appendChild(wrapper);
+    wrapper.appendChild(mainBtn); wrapper.appendChild(panel);
+    document.body.appendChild(wrapper);
 })();
 
 // ボード描画
@@ -1199,6 +1207,111 @@ openNumberGame = function(){
   attachFancyButtonEffects(document.getElementById('number-game-screen'));
 };
 
+
+// ===== Add global click debug helper (開発用: 必要ならコメントアウト) =====
+// document.addEventListener('click', e => { console.log('click', e.target); });
+
+// 重複定義を上部に統合済み
+
+// ===== じゃんけん =====
+const jankenContainer = document.getElementById('janken-container');
+const jankenStatus = document.getElementById('janken-status');
+const jankenButtons = document.getElementById('janken-buttons');
+const jankenReset = document.getElementById('janken-reset');
+const hands = ['gu','choki','pa'];
+const handEmoji = { gu: '✊', choki: '✌️', pa: '🖐️' };
+let jankenScore = { win: 0, lose: 0, draw: 0 };
+function judgeJanken(player, cpu) {
+  if (player === cpu) return 'draw';
+  if ((player === 'gu' && cpu === 'choki') || (player === 'choki' && cpu === 'pa') || (player === 'pa' && cpu === 'gu')) return 'win';
+  return 'lose';
+}
+function updateJankenStatus(text) {
+  if (jankenStatus) jankenStatus.innerHTML = `${text}<br>勝:${jankenScore.win} 負:${jankenScore.lose} 引:${jankenScore.draw}`;
+}
+if (jankenButtons) {
+  jankenButtons.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-hand]');
+    if (!btn) return;
+    const player = btn.getAttribute('data-hand');
+    const cpu = hands[Math.floor(Math.random()*hands.length)];
+    const result = judgeJanken(player, cpu);
+    jankenScore[result]++;
+    updateJankenStatus(`あなた ${handEmoji[player]} vs CPU ${handEmoji[cpu]} → ${result === 'win' ? '勝ち' : result === 'lose' ? '負け' : '引き分け'}`);
+    flashBackground();
+    showCanvasConfetti(900);
+  });
+}
+if (jankenReset) {
+  jankenReset.addEventListener('click', () => {
+    jankenScore = { win: 0, lose: 0, draw: 0 };
+    updateJankenStatus('リセットしました');
+  });
+}
+updateJankenStatus('手を選んでね');
+
+// ===== 反射神経ゲーム =====
+const reactionContainer = document.getElementById('reaction-container');
+const reactionStatus = document.getElementById('reaction-status');
+const reactionStart = document.getElementById('reaction-start');
+const reactionStop = document.getElementById('reaction-stop');
+let reactionTimer = null;
+let reactionStartTime = 0;
+function setReactionStatus(text) { if (reactionStatus) reactionStatus.textContent = text; }
+function enableReactionControls(startEnabled, stopEnabled) {
+  if (reactionStart) reactionStart.disabled = !startEnabled;
+  if (reactionStop) reactionStop.disabled = !stopEnabled;
+}
+if (reactionStart) {
+  reactionStart.addEventListener('click', () => {
+    enableReactionControls(false, true);
+    setReactionStatus('合図を待って…');
+    const delay = 600 + Math.random()*1800;
+    reactionTimer = setTimeout(() => {
+      reactionStartTime = performance.now();
+      setReactionStatus('今！止めて！');
+    }, delay);
+  });
+}
+if (reactionStop) {
+  reactionStop.addEventListener('click', () => {
+    if (!reactionTimer && !reactionStartTime) return;
+    const now = performance.now();
+    let ms;
+    if (reactionStartTime) {
+      ms = Math.round(now - reactionStartTime);
+      setReactionStatus(`反応速度: ${ms} ms`);
+      showCanvasConfetti(800);
+    } else {
+      setReactionStatus('早押ししすぎ！もう一度');
+    }
+    clearTimeout(reactionTimer);
+    reactionTimer = null;
+    reactionStartTime = 0;
+    enableReactionControls(true, false);
+  });
+}
+
+// ===== 数字あて =====
+const numberContainer = document.getElementById('number-container');
+const numberStatus = document.getElementById('number-status');
+const numberInput = document.getElementById('number-input');
+const numberGuess = document.getElementById('number-guess');
+const numberReset = document.getElementById('number-reset');
+let numberAnswer = Math.floor(Math.random()*99)+1;
+function setNumberStatus(text){ if(numberStatus) numberStatus.textContent = text; }
+function resetNumberGame(){ numberAnswer = Math.floor(Math.random()*99)+1; setNumberStatus('新しいお題：1〜99の数を当ててね'); if(numberInput) numberInput.value=''; }
+if (numberGuess) {
+  numberGuess.addEventListener('click', ()=>{
+    const val = parseInt(numberInput.value,10);
+    if (isNaN(val) || val<1 || val>99) { setNumberStatus('1〜99で入力してね'); return; }
+    if (val === numberAnswer) { setNumberStatus('正解！🎉'); showCanvasConfetti(1000); }
+    else if (val < numberAnswer) { setNumberStatus('もっと大きいよ'); }
+    else { setNumberStatus('もっと小さいよ'); }
+  });
+}
+if (numberReset) { numberReset.addEventListener('click', resetNumberGame); }
+
 // ===== Fix: Ensure openNumberGame reference & menu action binding after all definitions =====
 (function ensureNumberGameBinding(){
   // 1) 最新の openNumberGame が存在しなければ何もしない
@@ -1232,3 +1345,35 @@ openNumberGame = function(){
 
 // ===== Add global click debug helper (開発用: 必要ならコメントアウト) =====
 // document.addEventListener('click', e => { console.log('click', e.target); });
+
+// ===== ミニゲームメニュー切替 =====
+document.addEventListener('DOMContentLoaded', ()=>{
+    const gameMenu = document.getElementById('game-menu');
+    function hideAllGames() { document.querySelectorAll('[data-game-container]').forEach(el=> el.style.display='none'); }
+    function showGame(gameKey) {
+        hideAllGames();
+        const targets = document.querySelectorAll(`[data-game-container="${gameKey}"]`);
+        targets.forEach(el=> el.style.display='');
+        document.querySelectorAll('.action-button-row').forEach(el=>{
+            el.style.display = (el.getAttribute('data-game-container')===gameKey) ? '' : 'none';
+        });
+    }
+    hideAllGames();
+    if (gameMenu) {
+        gameMenu.addEventListener('click', (e)=>{
+            const node = e.target.closest('[data-game]');
+            if (!node) return;
+            const key = node.getAttribute('data-game');
+            if (!key) return;
+            showGame(key);
+            const cont = document.querySelector(`[data-game-container="${key}"]`);
+            cont && cont.scrollIntoView({behavior:'smooth', block:'start'});
+        });
+    }
+});
+// 初期はメニューのみ表示（全ゲーム非表示）
+function hideAllGames() {
+  const containers = document.querySelectorAll('[data-game-container]');
+  containers.forEach(el => el.style.display = 'none');
+}
+hideAllGames();

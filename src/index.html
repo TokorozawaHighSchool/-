@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>すごろくゲーム</title>
+    <title>ミニゲームコレクション</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        h1 {
+    h1 {
             font-size: 3rem;
             color: #f8a5c2;
             text-shadow: 2px 2px 4px #d1ccc0;
@@ -22,6 +22,29 @@
             border: 8px solid #fad9d9;
             border-radius: 50px;
             box-shadow: 0 0 15px #fad9d9, 0 0 25px #f3d9fa inset;
+        }
+
+        /* ゆめかわボタン */
+        .menu-btn, .choice-btn, #roll-button {
+            padding: 12px 20px;
+            border-radius: 18px;
+            border: 2px solid #f7cfff;
+            background: linear-gradient(90deg, #ffb8e6 0%, #b8eaff 100%);
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 4px 18px rgba(233,170,255,0.35);
+            font-weight: bold;
+            letter-spacing: 0.04em;
+            transition: transform 0.08s ease, filter 0.2s ease;
+        }
+        .menu-btn:hover, .choice-btn:hover, #roll-button:hover {
+            filter: brightness(1.05);
+        }
+        .menu-btn:active, .choice-btn:active, #roll-button:active {
+            transform: translateY(1px);
+        }
+        #game-menu {
+            display: flex; gap: 8px; justify-content: center; margin: 8px 0 16px;
         }
 
         @keyframes bubble {
@@ -45,8 +68,26 @@
 </head>
 <body>
     <div id="game-container">
-        <h1>すごろくゲーム</h1>
-        <div id="setup-container">
+        <h1>ミニゲームコレクション</h1>
+            <nav id="game-menu" class="menu-grid">
+                <div class="menu-card top-left" data-game="sugoroku">
+                    <button class="menu-btn" data-game="sugoroku">すごろく</button>
+                    <p class="menu-desc">サイコロで進むボードゲーム。イベントで進んだり戻ったり！</p>
+                </div>
+                <div class="menu-card top-right" data-game="janken">
+                    <button class="menu-btn" data-game="janken">じゃんけん</button>
+                    <p class="menu-desc">グー・チョキ・パーで勝負。勝敗とスコアを記録します。</p>
+                </div>
+                <div class="menu-card bottom-left" data-game="reaction">
+                    <button class="menu-btn" data-game="reaction">反射神経</button>
+                    <p class="menu-desc">合図が出たら即クリック！反応速度を測定します。</p>
+                </div>
+                <div class="menu-card bottom-right" data-game="number">
+                    <button class="menu-btn" data-game="number">数字あて</button>
+                    <p class="menu-desc">1〜99の数字を当てよう。高い/低いのヒントで絞り込み！</p>
+                </div>
+            </nav>
+    <div id="setup-container" data-game-container="sugoroku" style="display:none">
             <h2>モード・人数選択</h2>
             <form id="setup-form">
                 <label>モード:
@@ -76,14 +117,41 @@
                 <button type="submit">ゲーム開始</button>
             </form>
         </div>
-        <div id="board">
-            <!-- ゲームボードの要素をここに追加 -->
+        <div id="board" data-game-container="sugoroku">
+            <!-- すごろくのボード -->
+        </div>
+        <div id="janken-container" data-game-container="janken" style="display:none">
+                    <h2>じゃんけん</h2>
+                    <div id="janken-status"></div>
+                    <div id="janken-buttons">
+                        <button class="choice-btn" data-hand="gu">グー</button>
+                        <button class="choice-btn" data-hand="choki">チョキ</button>
+                        <button class="choice-btn" data-hand="pa">パー</button>
+                    </div>
+                    <div style="margin-top:12px"><button id="janken-reset" class="choice-btn">リセット</button></div>
+        </div>
+        <div id="reaction-container" data-game-container="reaction" style="display:none">
+                    <h2>反射神経テスト</h2>
+                    <div id="reaction-status">準備ができたらスタート！</div>
+                    <div style="margin-top:12px">
+                        <button id="reaction-start" class="choice-btn">スタート</button>
+                        <button id="reaction-stop" class="choice-btn" disabled>止める</button>
+                    </div>
+        </div>
+        <div id="number-container" data-game-container="number" style="display:none">
+            <h2>数字あてゲーム</h2>
+            <div id="number-status">1〜99の数を当ててね</div>
+            <div style="margin-top:12px; display:flex; gap:8px; justify-content:center">
+                <input id="number-input" type="number" min="1" max="99" placeholder="数字を入力" style="font-size:1.2rem; padding:8px 12px; border-radius:10px; border:2px solid #b8eaff" />
+                <button id="number-guess" class="choice-btn">決定</button>
+                <button id="number-reset" class="choice-btn secondary">リセット</button>
+            </div>
         </div>
         <div id="player-info">
             <h2>プレイヤー情報</h2>
             <!-- プレイヤーの情報をここに表示 -->
         </div>
-            <div class="action-button-row">
+                <div class="action-button-row" data-game-container="sugoroku">
                 <button id="roll-button">
                     <div id="dice" class="dice">🎲</div>
                     <span class="dice-label">サイコロを振る</span>
