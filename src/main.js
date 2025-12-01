@@ -1346,34 +1346,59 @@ if (numberReset) { numberReset.addEventListener('click', resetNumberGame); }
 // ===== Add global click debug helper (開発用: 必要ならコメントアウト) =====
 // document.addEventListener('click', e => { console.log('click', e.target); });
 
-// ===== ミニゲームメニュー切替 =====
-document.addEventListener('DOMContentLoaded', ()=>{
+// ===== ミニゲームメニュー切替（関数化＆フォールバック） =====
+function initGameMenuBinding(){
     const gameMenu = document.getElementById('game-menu');
-    function hideAllGames() { document.querySelectorAll('[data-game-container]').forEach(el=> el.style.display='none'); }
-    function showGame(gameKey) {
-        hideAllGames();
+    const hideAll = () => { document.querySelectorAll('[data-game-container]').forEach(el=> el.style.display='none'); };
+    const showGame = (gameKey) => {
+        hideAll();
         const targets = document.querySelectorAll(`[data-game-container="${gameKey}"]`);
         targets.forEach(el=> el.style.display='');
         document.querySelectorAll('.action-button-row').forEach(el=>{
             el.style.display = (el.getAttribute('data-game-container')===gameKey) ? '' : 'none';
         });
-    }
-    hideAllGames();
-    if (gameMenu) {
+    };
+    // ハッシュ監視で切替（フォールバック）
+    const applyHash = () => {
+        const m = String(location.hash || '').match(/game=([a-z]+)/);
+        if (m) { showGame(m[1]); }
+    };
+    window.addEventListener('hashchange', applyHash);
+    hideAll();
+    if (gameMenu && !gameMenu.__bound) {
+        gameMenu.__bound = true;
         gameMenu.addEventListener('click', (e)=>{
             const node = e.target.closest('[data-game]');
             if (!node) return;
             const key = node.getAttribute('data-game');
             if (!key) return;
+            // ハッシュ更新（フォールバック）
+            location.hash = `#game=${key}`;
             showGame(key);
             const cont = document.querySelector(`[data-game-container="${key}"]`);
             cont && cont.scrollIntoView({behavior:'smooth', block:'start'});
         });
     }
-});
-// 初期はメニューのみ表示（全ゲーム非表示）
-function hideAllGames() {
-  const containers = document.querySelectorAll('[data-game-container]');
-  containers.forEach(el => el.style.display = 'none');
+    // 追加フォールバック: 個別ボタンへの直接バインド
+    const menuBtns = document.querySelectorAll('.menu-btn[data-game]');
+    menuBtns.forEach(btn => {
+        if (btn.__bound) return;
+        btn.__bound = true;
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const key = btn.getAttribute('data-game');
+            if (!key) return;
+            location.hash = `#game=${key}`;
+            showGame(key);
+            const cont = document.querySelector(`[data-game-container="${key}"]`);
+            cont && cont.scrollIntoView({behavior:'smooth', block:'start'});
+        });
+    });
+    // 初期ロード時にハッシュがあれば反映
+    applyHash();
 }
-hideAllGames();
+// DOMContentLoaded で初期化
+document.addEventListener('DOMContentLoaded', initGameMenuBinding);
+// 読み込み済みなら即時フォールバック
+if (document.readyState !== 'loading') initGameMenuBinding();

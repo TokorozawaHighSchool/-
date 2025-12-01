@@ -1,2 +1,192 @@
+/* ゆめかわ配色と柔らかいUI */
+:root {
+	--pink: #ffb8e6;
+	--blue: #b8eaff;
+	--lavender: #dcd6ff;
+	--mint: #c6fff1;
+	--bg: linear-gradient(135deg, #f9eaff 0%, #eafffa 100%);
+	--text: #7b5ea6;
+	--card: rgba(255,255,255,0.85);
+	--shadow: 0 10px 30px rgba(180,140,255,.25);
+}
+
+body {
+	font-family: 'Segoe UI', 'Rounded Mplus 1c', 'Hiragino Sans', system-ui, sans-serif;
+	margin: 0;
+	background: var(--bg);
+	color: var(--text);
+}
+
+#game-container {
+	max-width: 1100px;
+	margin: 0 auto;
+	padding: 24px;
+	background: var(--card);
+	backdrop-filter: blur(6px);
+	border: 3px solid var(--blue);
+	border-radius: 28px;
+	box-shadow: var(--shadow);
+	min-height: 90vh; /* 画面中央寄せのため高さを確保 */
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+}
+
+h1 {
+	text-align: center;
+	font-size: 2.6rem;
+	color: var(--pink);
+	text-shadow: 0 2px 10px #fff0fa;
+	margin: 10px 0 18px;
+}
+ .home-lead { text-align:center; margin: 0 0 8px; color: var(--text); }
+
+/* メニューは大きめボタンで見やすく */
+#game-menu {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 22px;
+	justify-content: center;
+	align-items: start;
+	margin: 28px auto;
+	max-width: 1040px; /* セット全体を拡大 */
+}
+.menu-card {
+	background: var(--card);
+	border: 2px solid var(--blue);
+	border-radius: 22px;
+	box-shadow: var(--shadow);
+	padding: 22px 24px; /* カード余白も拡大 */
+	text-align: center;
+}
+.menu-card .menu-btn { width: 100%; font-size: 1.7rem; padding: 24px 32px; } /* 等比で拡大 */
+.menu-desc { margin: 12px 0 0; color: var(--text); font-size: 1.1rem; } /* 説明も少し拡大 */
+
+.menu-btn,
+.choice-btn,
+#roll-button {
+	padding: 16px 24px;
+	font-size: 1.2rem;
+	border-radius: 18px;
+	border: 2px solid #f7cfff;
+	background: linear-gradient(90deg, var(--pink) 0%, var(--blue) 100%);
+	color: #fff;
+	cursor: pointer;
+	box-shadow: 0 6px 20px rgba(233,170,255,0.35);
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	transition: transform 0.08s ease, filter 0.2s ease;
+}
+.menu-btn:hover,
+.choice-btn:hover,
+#roll-button:hover { filter: brightness(1.05); }
+.menu-btn:active,
+.choice-btn:active,
+#roll-button:active { transform: translateY(1px); }
+
+section { margin: 18px 0; }
+/* 各ゲームセクションを中央寄せ */
+section[data-game-container] { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+/* すごろく盤面はカード風＋大きめマス */
+#board {
+	display: flex;
+	gap: 10px;
+	overflow-x: auto;
+	border: 3px solid var(--blue);
+	border-radius: 22px;
+	min-height: 200px;
+	padding: 16px 12px;
+	background: linear-gradient(120deg, #ffeaff 70%, #eafffa 100%);
+	box-shadow: var(--shadow);
+	align-self: center; /* 横中央 */
+}
+.square {
+	width: 110px;
+	height: 110px;
+	border: 3px solid #f7cfff;
+	border-radius: 22px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	font-size: 1.4rem;
+	color: #b48fff;
+	background: linear-gradient(135deg, #ffeaff 80%, #eafffa 100%);
+}
+.player {
+	width: 48px;
+	height: 48px;
+	border-radius: 50%;
+	background: linear-gradient(135deg, var(--pink), var(--blue));
+	color: #fff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 1rem;
+	border: 3px solid #fff;
+	box-shadow: 0 6px 18px rgba(0,0,0,.08);
+}
+
+.action-button-row {
+	display: flex;
+	gap: 12px;
+	justify-content: center;
+	margin: 12px 0 0;
+}
+
+/* 入力類も見やすく */
+input[type="number"] {
+	padding: 10px 14px;
+	font-size: 1.1rem;
+	border: 2px solid var(--blue);
+	border-radius: 14px;
+	outline: none;
+}
+input[type="number"]:focus { border-color: var(--pink); }
+
+/* 右上クイックメニュー（FAB） */
+.fab-menu-wrapper {
+	position: fixed;
+	top: 20px;
+	right: 20px;
+	z-index: 1000;
+}
+.fab-main-btn {
+	width: 58px;
+	height: 58px;
+	border-radius: 50%;
+	border: 3px solid #f7cfff;
+	background: linear-gradient(135deg, var(--pink), var(--blue));
+	box-shadow: 0 10px 26px rgba(233,170,255,0.35);
+	cursor: pointer;
+}
+.fab-bars {
+	position: relative;
+	display: block;
+	width: 26px; height: 3px; background: #fff; margin: auto; border-radius: 3px;
+}
+.fab-bars::before, .fab-bars::after {
+	content: '';
+	position: absolute;
+	left: 0; width: 26px; height: 3px; background: #fff; border-radius: 3px;
+}
+.fab-bars::before { top: -7px; }
+.fab-bars::after { top: 7px; }
+.fab-panel {
+	position: absolute;
+	top: 66px;
+	right: 0;
+	background: var(--card);
+	border: 2px solid var(--blue);
+	border-radius: 18px;
+	box-shadow: var(--shadow);
+	padding: 10px;
+	display: none;
+}
+.fab-panel.open { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.fab-panel .menu-action { padding: 10px 14px; border-radius: 12px; border: 2px solid #f7cfff; background: #fff; cursor: pointer; color: var(--text); }
+.fab-panel .menu-action:hover { background: #fff7fd; }
 /* root styles consolidated from src/styles.css - see src for detailed styles if missing */
 @import url('src/styles.css');
