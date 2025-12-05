@@ -17,16 +17,17 @@ body {
 	color: var(--text);
 }
 
+/* ひと画面に収めるため、余白を抑えて高さをフィット */
 #game-container {
 	max-width: 1100px;
 	margin: 0 auto;
-	padding: 24px;
+	padding: 16px 18px;
 	background: var(--card);
 	backdrop-filter: blur(6px);
 	border: 3px solid var(--blue);
 	border-radius: 28px;
 	box-shadow: var(--shadow);
-	min-height: 90vh; /* 画面中央寄せのため高さを確保 */
+	min-height: 100vh; /* 画面にフィット */
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -35,33 +36,33 @@ body {
 
 h1 {
 	text-align: center;
-	font-size: 2.6rem;
+	font-size: 2.2rem; /* タイトルを少し小さく */
 	color: var(--pink);
 	text-shadow: 0 2px 10px #fff0fa;
-	margin: 10px 0 18px;
+	margin: 6px 0 12px;
 }
- .home-lead { text-align:center; margin: 0 0 8px; color: var(--text); }
+.home-lead { text-align:center; margin: 0 0 6px; color: var(--text); }
 
 /* メニューは大きめボタンで見やすく */
 #game-menu {
 	display: grid;
 	grid-template-columns: repeat(2, 1fr);
-	gap: 22px;
+	gap: 16px;
 	justify-content: center;
 	align-items: start;
-	margin: 28px auto;
-	max-width: 1040px; /* セット全体を拡大 */
+	margin: 18px auto;
+	max-width: 980px;
 }
 .menu-card {
 	background: var(--card);
 	border: 2px solid var(--blue);
 	border-radius: 22px;
 	box-shadow: var(--shadow);
-	padding: 22px 24px; /* カード余白も拡大 */
+	padding: 16px 18px; /* 余白を少し減らす */
 	text-align: center;
 }
-.menu-card .menu-btn { width: 100%; font-size: 1.7rem; padding: 24px 32px; } /* 等比で拡大 */
-.menu-desc { margin: 12px 0 0; color: var(--text); font-size: 1.1rem; } /* 説明も少し拡大 */
+.menu-card .menu-btn { width: 100%; font-size: 1.4rem; padding: 16px 22px; }
+.menu-desc { margin: 8px 0 0; color: var(--text); font-size: 1rem; }
 
 .menu-btn,
 .choice-btn,
@@ -89,22 +90,25 @@ section { margin: 18px 0; }
 /* 各ゲームセクションを中央寄せ */
 section[data-game-container] { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
-/* すごろく盤面はカード風＋大きめマス */
+/* すごろく盤面はカード風＋グリッドで中央揃え */
 #board {
-	display: flex;
+	display: grid;
+	/* ビューポートに合わせて自動縮小（13×2 が1画面に収まるよう算出） */
+	/* 1マスの基準幅: 92px を上限、足りない場合は calc で縮小 */
+	--cell: min(92px, calc((100vw - 80px) / 13));
+	grid-template-columns: repeat(13, var(--cell));
+	grid-template-rows: repeat(2, var(--cell));
 	gap: 10px;
-	overflow-x: auto;
+	justify-content: center;
 	border: 3px solid var(--blue);
 	border-radius: 22px;
-	min-height: 200px;
-	padding: 16px 12px;
+	padding: 14px 12px;
 	background: linear-gradient(120deg, #ffeaff 70%, #eafffa 100%);
 	box-shadow: var(--shadow);
-	align-self: center; /* 横中央 */
 }
 .square {
-	width: 110px;
-	height: 110px;
+	width: var(--cell);
+	height: var(--cell);
 	border: 3px solid #f7cfff;
 	border-radius: 22px;
 	display: flex;
@@ -116,8 +120,8 @@ section[data-game-container] { width: 100%; display: flex; flex-direction: colum
 	background: linear-gradient(135deg, #ffeaff 80%, #eafffa 100%);
 }
 .player {
-	width: 48px;
-	height: 48px;
+	width: calc(var(--cell) * 0.42);
+	height: calc(var(--cell) * 0.42);
 	border-radius: 50%;
 	background: linear-gradient(135deg, var(--pink), var(--blue));
 	color: #fff;
@@ -127,7 +131,34 @@ section[data-game-container] { width: 100%; display: flex; flex-direction: colum
 	font-size: 1rem;
 	border: 3px solid #fff;
 	box-shadow: 0 6px 18px rgba(0,0,0,.08);
+	position: absolute; /* マス内配置を固定 */
 }
+
+/* 中央アイコン（イベント種別）とツールチップ */
+.square-center-icon { font-size: 1.6rem; }
+.square-tooltip {
+	position: absolute;
+	bottom: 6px;
+	left: 50%;
+	transform: translateX(-50%);
+	background: rgba(255,255,255,0.92);
+	color: #7b5ea6;
+	font-size: 0.78rem;
+	padding: 4px 8px;
+	border-radius: 10px;
+	border: 1px solid #f0d8ff;
+	box-shadow: 0 4px 12px rgba(0,0,0,.05);
+	max-width: calc(var(--cell) - 12px);
+	text-align: center;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	pointer-events: none;
+}
+
+/* プレイヤーアイコンのポップ演出 */
+.player.pop { animation: player-pop .45s ease; }
+@keyframes player-pop { 0%{ transform: scale(1); } 40%{ transform: scale(1.18); } 100%{ transform: scale(1); } }
 
 .action-button-row {
 	display: flex;

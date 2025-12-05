@@ -171,7 +171,10 @@
 // root script delegates to src/main.js for now
 // If deployed as a single-root, copy build step can inline or bundle.
 (function(){
+  // 二重挿入ガード
+  if (document.querySelector('script[data-role="src-main-loader"]')) return;
   var s = document.createElement('script');
   s.src = 'src/main.js';
+  s.setAttribute('data-role','src-main-loader');
   document.head.appendChild(s);
 })();

@@ -60,10 +60,35 @@
         <section id="board" data-game-container="sugoroku" style="display:none"></section>
             <section id="player-info" style="display:none"></section>
         <div class="action-button-row" data-game-container="sugoroku" style="display:none">
-            <button id="roll-button"><span class="dice">🎲</span> サイコロを振る</button>
+            <button id="roll-button"><span class="dice" id="dice">🎲</span> サイコロを振る</button>
             <button id="use-item-button" class="choice-btn">アイテムを使う</button>
             <button id="fun-button" class="choice-btn">おもしろくする！</button>
                 <button class="home-btn choice-btn" data-home>ホームに戻る</button>
+        </div>
+        <div id="result" data-game-container="sugoroku" style="display:none"></div>
+
+        <!-- すごろく: 選択モーダル -->
+        <div id="choice-modal" class="modal" style="display:none">
+            <div class="modal-content">
+                <p id="choice-text"></p>
+                <div id="choice-buttons" style="display:flex; gap:12px; justify-content:center"></div>
+            </div>
+        </div>
+        <!-- すごろく: アイテムモーダル -->
+        <div id="item-modal" class="modal" style="display:none">
+            <div class="modal-content">
+                <h3>アイテム</h3>
+                <div id="item-list"></div>
+                <div style="text-align:center; margin-top:12px"><button id="close-item-modal" class="choice-btn secondary">閉じる</button></div>
+            </div>
+        </div>
+        <!-- すごろく: 対象選択モーダル（将来拡張） -->
+        <div id="target-modal" class="modal" style="display:none">
+            <div class="modal-content">
+                <h3>対象を選んでね</h3>
+                <div id="target-list"></div>
+                <div style="text-align:center; margin-top:12px"><button id="close-target-modal" class="choice-btn secondary">閉じる</button></div>
+            </div>
         </div>
 
         <section id="janken-container" data-game-container="janken" style="display:none">

@@ -316,6 +316,32 @@ let jokes = [
     });
 })();
 
+// 汎用オーバーレイメッセージ（存在しなければ自前で生成）
+function showOverlayMessage(text, duration = 1500) {
+    // 既存の要素を使うより、その場で軽量オーバーレイを生成して自動消滅させる
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'fixed';
+    wrapper.style.inset = '0';
+    wrapper.style.display = 'flex';
+    wrapper.style.alignItems = 'center';
+    wrapper.style.justifyContent = 'center';
+    wrapper.style.background = 'rgba(0,0,0,.15)';
+    wrapper.style.zIndex = 1200;
+    const card = document.createElement('div');
+    card.style.background = 'white';
+    card.style.borderRadius = '16px';
+    card.style.boxShadow = '0 10px 36px rgba(0,0,0,.2)';
+    card.style.padding = '18px 22px';
+    card.style.maxWidth = '80vw';
+    card.style.textAlign = 'center';
+    card.style.fontSize = '16px';
+    card.style.lineHeight = '1.5';
+    card.textContent = String(text || '');
+    wrapper.appendChild(card);
+    document.body.appendChild(wrapper);
+    setTimeout(()=>{ wrapper.style.transition='opacity .35s'; wrapper.style.opacity='0'; setTimeout(()=>wrapper.remove(), 380); }, duration);
+}
+
 // ジョーク表示用のオーバーレイを作る
 function showJoke() {
     const text = jokes[Math.floor(Math.random() * jokes.length)];
@@ -562,9 +588,7 @@ function triggerRandomBg(){
 // ボード描画
 function drawBoard() {
     board.innerHTML = "";
-    board.style.display = "grid";
-    board.style.gridTemplateColumns = "repeat(13, 1fr)";
-    board.style.gridTemplateRows = "repeat(2, 1fr)";
+    // CSS側でグリッド定義済み（13x2）
     for (let i = 0; i < NUM_SQUARES; i++) {
     const square = document.createElement("div");
     square.className = "square";
@@ -577,7 +601,9 @@ function drawBoard() {
     square.setAttribute("data-description", squareEvents[i].text || "");
     const tooltip = document.createElement("div");
     tooltip.className = "square-tooltip";
-    tooltip.textContent = squareEvents[i].text || "";
+        // 長すぎる文は先頭20文字程度に省略
+        const t = (squareEvents[i].text || "");
+        tooltip.textContent = t.length > 22 ? (t.slice(0, 22) + '…') : t;
     square.appendChild(tooltip);
         // 1〜13マス目は1行目、14〜26マス目は2行目
         square.style.gridRow = (i < 13) ? "1" : "2";
@@ -585,12 +611,12 @@ function drawBoard() {
         // 同じマスにいるプレイヤーを集め、被らないように配置する
         const playersHere = [];
         playerPositions.forEach((pos, idx) => { if (pos === i) playersHere.push(idx); });
-    // 右上バッジは不要になったため削除（中央アイコンを表示）
+        // 右上バッジは不要になったため削除（中央アイコンを表示）
         if (playersHere.length > 0) {
-            const pSize = 56; // .player の想定サイズ(px)
-            const sSize = 120; // .square の想定サイズ(px)
+            const pSize = 42; // .player のCSSサイズと一致
+            const sSize = 100; // .square のCSSサイズと一致
             const padding = 8;
-                playersHere.forEach((playerIdx, pIdx) => {
+            playersHere.forEach((playerIdx, pIdx) => {
                 const playerDiv = document.createElement("div");
                 playerDiv.className = "player";
                 // プレイヤー idx を属性として残す（勝利演出で参照するため）
@@ -605,19 +631,19 @@ function drawBoard() {
                 // 色分け
                 const colors = ["#ffb8e6", "#b8eaff", "#b8ffb8", "#ffeab8"];
                 playerDiv.style.background = colors[playerIdx % colors.length];
-                // 位置を計算（最大4人は2x2、それ以上は少しずらして積む）
+                // 位置を計算（最大4人は2x2、それ以上は斜めオフセット）
                 if (playersHere.length <= 4) {
                     const col = pIdx % 2;
                     const row = Math.floor(pIdx / 2);
-                    const horizontalGap = sSize - (2 * padding) - pSize; // 例: 48
-                    const verticalGap = horizontalGap;
-                    const top = padding + row * verticalGap;
-                    const left = padding + col * horizontalGap;
+                    const cell = (sSize - pSize) - (padding * 2); // 余白内で等間隔
+                    const step = Math.max(14, Math.floor(cell));
+                    const top = padding + row * step;
+                    const left = padding + col * step;
                     playerDiv.style.top = top + "px";
                     playerDiv.style.left = left + "px";
                 } else {
-                    // 5人以上は少しずつ重ねる
-                    const offset = pIdx * 6;
+                    // 5人以上は少しずつ重ねる（見切れない程度のオフセット）
+                    const offset = Math.min(28, 6 * pIdx);
                     playerDiv.style.top = (padding + offset) + "px";
                     playerDiv.style.left = (padding + offset) + "px";
                 }
@@ -642,7 +668,9 @@ function updatePlayerInfo() {
 
 // ミニゲームのロジックを追加
 // ミニゲーム: 早押し / スロット / クイズ の複数実装
-function startMiniGame(type = 'quick') {
+// ミニゲーム: 早押し / スロット / クイズ
+// opts: { mode: 'intro' | 'normal', onEnd?: Function }
+function startMiniGame(type = 'quick', opts = {}) {
     // type: 'quick' | 'slot' | 'quiz' - ランダム選択も可能
     const gameType = type === 'random' ? ['quick','slot','quiz'][Math.floor(Math.random()*3)] : type;
     const modal = document.createElement('div');
@@ -678,7 +706,12 @@ function startMiniGame(type = 'quick') {
             drawBoard(); updatePlayerInfo();
         }
         modal.remove();
-        // ターン進行
+        // 導入用モードなら、ゲームの進行は行わずコールバックに委ねる
+        if (opts && opts.mode === 'intro') {
+            if (typeof opts.onEnd === 'function') opts.onEnd();
+            return;
+        }
+        // 通常モード: ターン進行
         currentPlayer = (currentPlayer + 1) % NUM_PLAYERS;
         if (isCpuMode && currentPlayer >= NUM_PLAYERS - NUM_CPUS) setTimeout(cpTurn, 900);
         else rollButton.disabled = false;
@@ -760,9 +793,13 @@ function startMiniGame(type = 'quick') {
                         } else {
                             // ハズレ: モーダルを閉じてターン進行
                             modal.remove();
-                            currentPlayer = (currentPlayer + 1) % NUM_PLAYERS;
-                            if (isCpuMode && currentPlayer >= NUM_PLAYERS - NUM_CPUS) setTimeout(cpTurn, 900);
-                            else rollButton.disabled = false;
+                            if (opts && opts.mode === 'intro') {
+                                if (typeof opts.onEnd === 'function') opts.onEnd();
+                            } else {
+                                currentPlayer = (currentPlayer + 1) % NUM_PLAYERS;
+                                if (isCpuMode && currentPlayer >= NUM_PLAYERS - NUM_CPUS) setTimeout(cpTurn, 900);
+                                else rollButton.disabled = false;
+                            }
                         }
                         spinning = false;
                     }
@@ -788,7 +825,15 @@ function startMiniGame(type = 'quick') {
         document.getElementById('quiz-submit').addEventListener('click', ()=>{
             const val = document.getElementById('quiz-answer').value.trim();
             if (val === item.a) endGame(currentPlayer, {type:'item', item:{name:'知識のコスメ', desc:'1マス進む', type:'move', value:1}});
-            else { modal.remove(); currentPlayer = (currentPlayer + 1) % NUM_PLAYERS; if (isCpuMode && currentPlayer >= NUM_PLAYERS - NUM_CPUS) setTimeout(cpTurn, 900); else rollButton.disabled = false; }
+            else {
+                modal.remove();
+                if (opts && opts.mode === 'intro') {
+                    if (typeof opts.onEnd === 'function') opts.onEnd();
+                } else {
+                    currentPlayer = (currentPlayer + 1) % NUM_PLAYERS;
+                    if (isCpuMode && currentPlayer >= NUM_PLAYERS - NUM_CPUS) setTimeout(cpTurn, 900); else rollButton.disabled = false;
+                }
+            }
         });
     }
 }
@@ -797,8 +842,8 @@ function startMiniGame(type = 'quick') {
 function checkForMiniGame(position) {
     const miniGamePositions = [5, 10, 15]; // ミニゲームが発生するマス
     if (miniGamePositions.includes(position)) {
-        // 発生したらランダムでミニゲームを選ぶ
-        startMiniGame('random');
+    // 発生したらランダムでミニゲームを選ぶ（通常モード）
+    startMiniGame('random', { mode: 'normal' });
     }
 }
 
@@ -1201,11 +1246,13 @@ function safeOpenNumberGame(){
 attachFancyButtonEffects();
 
 // openNumberGame 内末尾でエフェクト適用できるようフックを追加するため openNumberGame を再ラップ
-const _originalOpenNumberGame = openNumberGame;
-openNumberGame = function(){
-  _originalOpenNumberGame();
-  attachFancyButtonEffects(document.getElementById('number-game-screen'));
-};
+if (typeof openNumberGame === 'function') {
+    const _originalOpenNumberGame = openNumberGame;
+    openNumberGame = function(){
+        _originalOpenNumberGame();
+        attachFancyButtonEffects(document.getElementById('number-game-screen'));
+    };
+}
 
 
 // ===== Add global click debug helper (開発用: 必要ならコメントアウト) =====
@@ -1352,6 +1399,25 @@ function initGameMenuBinding(){
     const hideAll = () => { document.querySelectorAll('[data-game-container]').forEach(el=> el.style.display='none'); };
     const showGame = (gameKey) => {
         hideAll();
+        // すごろく選択時は導入ミニゲーム→セットアップへ
+        if (gameKey === 'sugoroku') {
+            // 導入ミニゲームを表示
+            startMiniGame('quick', {
+                mode: 'intro',
+                onEnd: () => {
+                    // ミニゲーム終了後にセットアップ画面へ
+                    const setup = document.getElementById('setup-container');
+                    const boardEl = document.getElementById('board');
+                    const infoEl = document.getElementById('player-info');
+                    const rowEl = document.querySelector('.action-button-row');
+                    if (setup) setup.style.display = '';
+                    if (boardEl) boardEl.style.display = 'none';
+                    if (infoEl) infoEl.style.display = 'none';
+                    if (rowEl) rowEl.style.display = 'none';
+                }
+            });
+            return;
+        }
         const targets = document.querySelectorAll(`[data-game-container="${gameKey}"]`);
         targets.forEach(el=> el.style.display='');
         document.querySelectorAll('.action-button-row').forEach(el=>{
